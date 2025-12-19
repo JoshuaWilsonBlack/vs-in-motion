@@ -1,0 +1,15 @@
+data/
+
+praat/
+
+audio/
+
+images/
+
+plots/
+
+validation/
+
+models/
+
+**_files/
