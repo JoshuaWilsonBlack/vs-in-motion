@@ -2,7 +2,7 @@
 
 # Acquiring a Vowel System in Motion: Preschoolers and the NZE Expanded Short Front Vowel Shift
 
-Joshua Wilson Black (a) and Lynn Clark (a, b)
+Joshua Wilson Black (a), Lynn Clark (a, b), and Gia Hurring (a)
 
 a: New Zealand Institute of Language, Brain and Behaviour, University of Canterbury.
 
