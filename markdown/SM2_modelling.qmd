@@ -1,0 +1,3951 @@
+---
+title: "SM2: Modelling"
+subtitle: 'Supplementary material for "Acquiring a vowel system in motion."'
+author:
+    - name:
+        given: Joshua
+        family: Wilson Black
+      orcid: 0000-0002-8272-5763
+      email: joshua.black@canterbury.ac.nz
+      affiliations:
+      - name: New Zealand Institute for Language, Brain and Behaviour, University of Canterbury
+        city: Christchurch
+        country: New Zealand
+    - name: Lynn Clark
+      orcid: 0000-0003-3282-6555
+      email: lynn.clark@canterbury.ac.nz
+      affiliations:
+        - name: Department of Linguistics, University of Canterbury
+          city: Christchurch
+          country: New Zealand
+        - name: New Zealand Institute for Language, Brain and Behaviour, University of Canterbury
+          city: Christchurch
+          country: New Zealand
+    - name: Gia Hurring
+      orcid: 0000-0003-1575-6073
+      email: gia.hurring@canterbury.ac.nz
+      affiliations:
+        - name: New Zealand Institute for Language, Brain and Behaviour, University of Canterbury
+          city: Christchurch
+          country: New Zealand
+funding: "Marsden Fund Grant from the Royal Society of New Zealand (20-UOC-064)"
+date: today
+lightbox: auto
+format: 
+  html:
+    theme:
+      - simplex
+      - brand
+    css: theme.css
+    toc: true
+    toc-depth: 4
+    toc-expand: true
+    toc-location: right
+    code-summary: "To view code click here"
+    anchor-sections: true
+    number-sections: true
+    cap-location: margin
+    title-block-banner: "#e8e4e4"
+    title-block-banner-color: "#3E3C3D"
+    banner-img: 'images/nzilbb-uc-marsden.svg'
+    fig-responsive: true
+    lang: 'en-GB'
+    execute:
+      warning: false
+    embed-resources: false
+    include-in-header:
+      - text: |
+         <link rel = "shortcut icon" href = "images/fav.png" />
+    include-after-body:
+      - text: |
+          <div class ="bottom-logo">
+            <img src = "images/NZILBB-small.svg" width="5%">
+          </div>
+    template-partials:
+      - title-block.html
+bibliography: 
+  - "https://api.citedrive.com/bib/1e7eade6-e5e0-4cea-96b3-27a813f7bd4a/references.bib?x=eyJpZCI6ICIxZTdlYWRlNi1lNWUwLTRjZWEtOTZiMy0yN2E4MTNmN2JkNGEiLCAidXNlciI6ICI0NzAyIiwgInNpZ25hdHVyZSI6ICJkOWIxODViNzJiOWNmNDQ1ZWVjMGU4NzNhMzM4ODg2NWUyYTQ3MzgzMDQ3ZjIxZWIwZDUxNTBkYThkMzE1M2VkIn0=/bibliography.bib"
+  - ../grateful-refs.bib
+editor:
+  markdown:
+    wrap: 72
+editor_options: 
+  chunk_output_type: inline
+---
+
+# Overview
+
+This markdown sets out our modelling for both the preschoolers' and
+QuakeBox corpora. 
+
+We fit Bayesian GAMMs for both corpora. This is due to the increased capacity
+to control model behaviour, especially in light of low token-counts in the
+children's data.
+
+This project is carried out in an exploratory spirit. We're trying to pick
+out the key patterns in the data and depict the confidence with which our
+models asign to them, rather than testing this or that concrete hypothesis
+about how preschool children pick up the NZE vowel system. The patterns we
+identify should be taken account of when designing more traditional 
+confirmatory research in developmental sociolinguistics.
+
+# Packages and data
+
+We load the required R packages and set some global variables.
+
+```{r}
+# Tidyverse and friends
+library(tidyverse)
+library(lubridate)
+library(modelr)
+library(ggforce)
+library(ggrepel)
+library(geomtextpath)
+library(scico)
+
+# File path management and IO
+library(here)
+library(qs2)
+
+# NZILBB packages for interaction with LaBB-CAT and modifying vocalic data.
+library(nzilbb.vowels)
+library(nzilbb.labbcat)
+
+# Libraries for Bayesian modelling
+library(brms)
+library(tidybayes)
+library(bayesplot)
+library(ggdist)
+
+# Model interpretation
+library(marginaleffects)
+library(modelbased)
+
+# GAMM libraries for QuakeBox data
+library(mgcv)
+library(itsadug)
+
+# Nice tables.
+library(kableExtra)
+
+# secr provides the pointsInPolygon function for plotting interaction.
+#library(secr)
+
+# Set ggplot theme
+theme_set(theme_bw())
+bayesplot_theme_set(theme_bw())
+
+labbcat.url <- 'https://labbcat.canterbury.ac.nz/kids/'
+
+# Set colours for vowel plots
+# These are derived from Tol's rainbow palette, designed
+# to be maximally readable for various forms of colour
+# blindness (https://personal.sron.nl/~pault/).
+
+# Some plots have 11 vowels...
+vowel_colours_11 <- c(
+  DRESS = "#777777",
+  FLEECE = "#882E72",
+  GOOSE = "#4EB265",
+  KIT = "#7BAFDE",
+  LOT = "#DC050C",
+  TRAP = "#F7F056",
+  START = "#1965B0",
+  STRUT = "#F4A736",
+  THOUGHT = "#72190E",
+  NURSE = "#E8601C",
+  FOOT = "#5289C7"
+)
+
+# ...some have only five vowels.
+vowel_colours_5 <- c(
+  DRESS = "#777777",
+  FLEECE = '#4477AA',
+  TRAP = '#228833',
+  NURSE = '#EE6677',
+  KIT = '#CCBB44'
+)
+
+# Create variable to select only NZE short front vowels.
+short_front <- c(
+  "FLEECE", "DRESS", "NURSE", "KIT", "TRAP"
+)
+```
+
+We load the preschoolers and QB data.^[
+Code to extract the data from QuakeBox is given in the `scripts` directory
+of the GitHub repository for the project.
+]
+
+```{r}
+kids <- read_rds(here('data', 'processed_vowels.rds'))
+QB1 <- read_rds(here('data', 'QB1.rds'))
+```
+
+# Data preparation
+
+This section sets out some basic, pre-modelling data exploration. We also
+extract summary information for the subset of the QuakeBox corpus in order to
+report it in the paper. A fuller data description for the kids data is available
+in `SM1_formants`.
+
+## Preschoolers
+
+We will split the data into two, one for our F1 models and the other for our F2
+models. This allows us to separately filter F1 and F2 outliers with the relevant
+columns in the data (`F1_outlier` and `F2_outlier`). This, in turn, enables us
+to rescue tokens which might otherwise have been lost if we removed all tokens
+which are either F1 or F2 outliers.
+
+We'll also scale age, for ease of modelling. We won't scale formant values, as
+this simplifies plotting and the nature of normalisation means they are already
+reasonably close to z-scored values.
+
+It is worth emphasising that we *include* unstressed tokens and stopwords. We
+will model the effect of each in our models.
+
+```{r}
+kids <- kids |>
+  filter(
+    vowel %in% short_front,
+    !is.na(F1_lob2),
+    !is.na(F2_lob2)
+  ) |>
+  mutate(
+    age_s = scale(age)[,1]
+  )
+
+min_age_s = min(kids$age_s)
+max_age_s = max(kids$age_s)
+
+# Create dataframe for F1 models
+f1 <- kids |>
+  filter(!F1_outlier) |> 
+  select(
+    participant, collect, age_s, gender, word, vowel, stressed, stopword, 
+    F1_lob2, duration_s, age
+  ) |> 
+  mutate(
+    gender = as.factor(gender),
+    word = as.factor(word)
+  )
+
+# Create dataframe for F2 models
+f2 <- kids |>
+  filter(!F2_outlier) |> 
+  select(
+    participant, collect, age_s, gender, word, vowel, stressed, stopword, 
+    F2_lob2, duration_s, age
+  ) |> 
+  mutate(
+    gender = as.factor(gender),
+    word = as.factor(word)
+  )
+
+# The following function takes a scaled age value and returns it to age in 
+# months.
+age_in_months <- function(subset, all_data) {
+  subset %>% 
+    mutate(
+      age = subset$age_s * sd(all_data$age) + mean(all_data$age)
+    )
+}
+```
+
+We now plot mean vowel spaces from the kids data, including only stressed tokens.
+
+```{r}
+#| label: fig-k-vs
+#| fig.cap: |
+#|    Mean poitions of NZ Extended Front Vowel Shift vowels in preschooler
+#|    corpus.
+vowel_summary <- kids |> 
+  group_by(vowel) |> 
+  filter(
+    stressed
+  ) |> 
+  summarise(
+    mean_f1 = mean(F1_lob2),
+    mean_f2 = mean(F2_lob2)
+  )
+  
+mean_plot <- kids |>
+  ggplot(
+    aes(
+      x = F2_lob2,
+      y = F1_lob2,
+      colour = vowel,
+      label = vowel
+    )
+  ) + 
+  stat_ellipse(level=0.68, linewidth=1) +
+  geom_point(data = vowel_summary, aes(x=mean_f2, y=mean_f1)) +
+  geom_label_repel(
+    mapping = aes(x=mean_f2, y=mean_f1),
+    min.segment.length = 0, seed = 42,
+    show.legend = FALSE,
+    fontface = "bold",
+    size = 10 / .pt,
+    label.padding = unit(0.2, "lines"),
+    force = 2,
+    max.overlaps = Inf,
+    data = vowel_summary
+  ) +
+  scale_x_reverse(limits = c(3, -1)) +
+  scale_y_reverse(limits = c(3, -2)) +
+  scale_colour_manual(values = vowel_colours_5) +
+  coord_fixed() +
+  theme(
+    legend.position = "none"
+  ) +
+  labs(
+    title = "Preschool",
+    x = "First formant (normalized)",
+    y = "Second formant (normalized)"
+  )
+
+mean_plot
+```
+
+## QuakeBox
+
+In order to interpret @fig-k-vs, it is worth looking at adults from the same 
+community on the same scale.
+
+```{r}
+#| label: fig-c-vs
+#| fig.cap: |
+#|    Mean poitions of NZ Extended Front Vowel Shift vowels in QuakeBox.
+QB1_summary <- QB1 |> 
+  filter(
+    vowel %in% short_front,
+    !unstressed
+  ) |> 
+  group_by(vowel) |> 
+  summarise(
+    mean_f1 = mean(F1_lob2),
+    mean_f2 = mean(F2_lob2)
+  )
+  
+QB1_mean_plot <- QB1 |>
+  filter(
+    vowel %in% short_front,
+    !unstressed
+  ) |> 
+  ggplot(
+    aes(
+      x = F2_lob2,
+      y = F1_lob2,
+      colour = vowel,
+      label = vowel
+    )
+  ) + 
+  stat_ellipse(level=0.68, linewidth=1) +
+  geom_point(data = QB1_summary, aes(x=mean_f2, y=mean_f1)) +
+  geom_label_repel(
+    mapping = aes(x=mean_f2, y=mean_f1),
+    min.segment.length = 0, seed = 42,
+    show.legend = FALSE,
+    fontface = "bold",
+    size = 10 / .pt,
+    max.overlaps = Inf,
+    force = 2,
+    label.padding = unit(0.2, "lines"),
+    data = QB1_summary
+  ) +
+  scale_x_reverse(limits = c(3, -1)) +
+  scale_y_reverse(limits = c(3, -2)) +
+  scale_colour_manual(values = vowel_colours_5) +
+  coord_fixed() + 
+  theme(
+    legend.position = "none"
+  ) +
+  labs(
+    title = "Community (QuakeBox)",
+    x = "First formant (normalized)",
+    y = "Second formant (normalized)"
+  )
+
+QB1_mean_plot
+```
+
+We now combine @fig-k-vs and @fig-c-vs into a single plot and save it to become
+Figure 6 in the paper.
+
+```{r}
+#| fig-cap: |
+#|   Overall vowel spaces for NZE short front vowels in preschoolers (left) and 
+#|   adults (right). Ellipses are at 1 standard deviation.
+#| label: fig-vs
+combined_raw_plot <- (mean_plot + theme(legend.position = "none")) +
+  QB1_mean_plot
+
+ggsave(
+  here('plots', 'figure8_normalised_vowel_spaces.tiff'),
+  plot = combined_raw_plot,
+  width = 7,
+  height = 5,
+  dpi = 500
+)
+
+combined_raw_plot
+```
+
+The most obvious feature of @fig-vs is that the kids have much more variability
+in their production in normalised space. The second thing to note is the
+higher and fronter position of [dress]{.smallcaps} in the preschool data along
+with the lower and backer [trap]{.smallcaps}. The position of [nurse]{.smallcaps}
+is also quite different across the two populations.
+
+# Modelling
+
+## Preschoolers
+
+### Modelling strategy
+
+As noted above, we will be fitting Bayesian GAMMs. The rationale for this is
+discussed in the paper. Our primary motivation is the increased control over
+model convergence which Bayesian methods allow. This comes, in part, from the
+capacity to set informative priors and to specify the underlying probabilistic
+model we assume. 
+
+Our model structure is as follows, applied to each vowel-formant separately (e.g.
+to the normalised first formant of [dress]{.smallcaps}):
+```
+normalised_formant_values ~ gender + stopword + 
+    s(age_s, by=gender, k = 5) +
+    s(duration_s, k = 5) +
+    (1 | w_s) +
+    (1 | p_c)
+
+```
+
+We adopt an apparent time rather than real time approach even though our data
+has some longitudinal component. We believe that the coverage across each time
+point for the speakers is insufficient for a good longitudinal model (although
+one is fit at the end of this document to see if anything emeges which is 
+incompatible with the apparent time approach). 
+
+The consequence of this apparent time approach is that _age_ is our primary
+independent variable. We fit a smooth function for age for each gender in the
+data set (binary, male and female). We also include stopwords in the data,
+allowing the model to fit a distinct intercept for each level of 'stopword'. 
+We fit a smooth function for duration as a proxy for capturing the effect of
+local speech rate. 
+
+The random effects structure we adopt consists of random intercepts for each
+preschooler, at each collect `(1|p_c)`. That is, the data for the first collection point
+of a speaker has a distinct random intercept from their second. 
+We also fit a random effect for each word, distinguishing stressed and unstressed
+syllables from the word `(1|w_s)`. That is, for instance, we allow a random intercept
+for the stressed syllable in "remember" and another random intercept for 
+tokens coming from the non-stressed syllables (with, as noted above, stress
+coming from CELEX). 
+
+The tag `_s` indicates that we have scaled the variables.
+
+We use a t-distribution as our response, learning the degrees of freedom 
+parameter from the data. This is means the model is less sensitive to any 
+remaining extreme values in the data.
+
+We use a reasonably conservative prior, designed to aid model convergence while
+allowing a wide range of formant values to be capture by the model. That is, the
+only information which we try to incorporate in to the prior is that we are
+predicting normalised formant values. More detail is provided in the prior
+predictive check below.
+
+We now fit models to each vowel. There is a distinct tab for each 
+vowel, each of which contains a model for normalised F1 and F2. We begin with
+the prior predictive check (to ensure the prior does not exclude plausible 
+values).
+
+We fit with 4 chains and 3000 iterations. We start with `adapt_delta=0.9`. This
+is the step size when exploring the probability distribution. We reduce it for
+models which report divergent transitions.
+
+### By-vowel
+
+::: {.panel-tabset}
+
+#### Prior predictive check
+
+We begin by sampling from our prior distribution to ensure that we are producing
+values in the ballpark of plausible values for our data. We'll fit this using
+the data for [dress]{.smallcaps}. This is for coding convenience, as the model
+is not learning from the data. What we are doing here is ensuring that we are
+not unduly biasing the model towards a particular result.
+
+```{r}
+dress_f1_data <- f1 |> 
+  filter(
+    vowel == "DRESS"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+```
+
+We establish the prior distribution and take samples from it.
+
+```{r}
+prior_t <- c(
+  prior(gamma(2, 3), class = "nu"), # degrees of freedom of t-distribution
+  prior(exponential(1), class = "sigma"), # variance parameter for t-distribution
+  prior(normal(0, 2), class = "Intercept"), # global intercept value (at reference level).
+  prior(normal(0, 1), class = "sd"), # sd for random intercept terms.
+  prior(normal(0, 0.5), class = "sds"), # smoothing parameters (how wiggly)
+  prior(normal(0, 2), class = "b") # fixed effects coefficients
+)
+```
+
+```{r}
+#| eval: false
+dress_f1_prior_t <- brm(
+    F1_lob2 ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = dress_f1_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 2000,
+    control = list(adapt_delta = 0.9),
+    sample_prior = "only"
+  )
+
+write_rds(
+  dress_f1_prior_t, 
+  here('models', 'dress_f1_prior_t.rds'), 
+  compress = "gz"
+)
+```
+
+```{r}
+#| include: false
+dress_f1_prior_t <- read_rds(here('models', 'dress_f1_prior_t.rds'))
+```
+
+We take 100 draws from the prior and plot the distribution.
+
+```{r}
+#| label: fig-prior-pc
+#| message: false
+#| eval: false
+prior_draws <- posterior_predict(dress_f1_prior_t, ndraws = 100)
+prior_draws <- prior_draws |> 
+  t() |> 
+  as_tibble(.name_repair='unique') |> 
+  bind_cols(dress_f1_data) |> 
+  pivot_longer(
+    cols = contains('...'),
+    names_to = "draw_index",
+    values_to = "draw_value"
+  ) |> 
+  mutate( 
+    draw_index = as.numeric(str_replace(draw_index, "...", ""))
+  )
+
+prior_draws |> 
+  ggplot(
+    aes(
+      x = age_s,
+      y = draw_value
+    )
+  ) +
+  geom_jitter(alpha = 0.1) +
+  geom_smooth() +
+  labs(
+    title = "100 draws from the prior predictive distribution"
+  ) +
+  scale_y_continuous(limits=c(-20, 20))
+```
+What we want to see here is that our prior is not excluding plausible values.
+If anything, our prior could be made even more informative (i.e.
+restrict the results more). But this should be sufficient for present purposes.
+
+#### [dress]{.smallcaps} {.panel-tabset}
+
+##### F1
+
+We repeat the code to extract the [dress]{.smallcaps} data so that this tab
+matches the tabs for the other vowels (i.e. the following block is repeated from
+the start of the prior predictive check tab).
+
+```{r}
+dress_f1_data <- f1 |> 
+  filter(
+    vowel == "DRESS"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+  
+
+summary(dress_f1_data)
+```
+
+Unsurprisingly, the majority of the words here are stop words. 
+In fact, 480 tokens of 940 are the word 'then'.
+
+We fit our model for [dress]{.smallcaps}
+```{r}
+#| eval: false
+dress_f1_fit <- brm(
+    F1_lob2 ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = dress_f1_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.99),
+  )
+
+write_rds(
+  dress_f1_fit, 
+  here('models', 'dress_f1_fit_t.rds'), 
+  compress = "gz"
+)
+```
+
+```{r}
+#| include: false
+dress_f1_fit <- read_rds(here('models', 'dress_f1_fit_t.rds'))
+```
+
+Let's look at the model summary.
+```{r}
+summary(dress_f1_fit)
+```
+
+
+The above values don't tell us much by themselves.
+
+We'll look at some posterior predictive checks to help test that our model is
+compatible with the data.
+
+```{r}
+#| label: fig-ppd-check-1
+#| fig.cap: |
+#|    Posterior predictive test of DRESS F1 model split by gender.
+pp_check(dress_f1_fit, type="dens_overlay_grouped", group="gender", ndraws = 100) +
+  labs(
+    title = "PPD check (DRESS F1)"
+  )
+```
+
+```{r}
+#| label: fig-dress-ppd-2d
+#| fig.cap: |
+#|    Posterior predictive check for DRESS F1 model.
+pp_check(dress_f1_fit, type = "stat_2d", stat = c("min", "max"), ndraws = 100) +
+  labs(
+    title = "PPD check (DRESS F1)"
+  )
+```
+@fig-dress-ppd-2d tells us that the actual data (the thick blue point) fits
+roughly within the range of predictions from our model.
+
+Let's look at a traditional quantile-quantile plot to assess model predictions.
+
+```{r}
+#| label: fig-dress-qq-1
+dress_f1_data %>%
+  add_residual_draws(dress_f1_fit) %>%
+  median_qi() %>%
+  ggplot(aes(sample = .residual)) +
+  geom_qq() +
+  geom_qq_line()
+```
+
+There's a bit of difficulty in the tails, but nothing too upsetting.
+
+The following block allows us to check model predictions against the
+longitudinal aspect of the data set. We calculate the mean values for each
+collection point for each preschooler. We can then determine the difference
+between collection points in terms of change in mean formant values and change
+in age. We then calculate the model predictions for the corresponding age 
+values (including the random intercepts for the relevant preschooler and 
+collection points). We then compare the two distributions visually.
+```{r}
+#| label: fig-dress-long-test
+#| warning: false
+diff_check <- function(mod, data) {
+  differences <- data %>% 
+    rename(
+      F_lob2 = matches("F[12]_lob2")
+    ) %>% 
+  group_by(participant, collect) %>% 
+  summarise(
+    F_lob2 = mean(F_lob2, na.rm = T),
+    age_s = first(age_s),
+    gender = first(gender)
+  ) %>%
+  group_by(participant) %>% 
+  nest() %>% 
+  mutate(
+    diffs = map(
+      data,
+      ~ {
+        in_dat <- .x %>% 
+          arrange(age_s)
+        
+        out_dat <- 
+          crossing(
+            "age_1" = in_dat$age_s,
+            "age_2" = in_dat$age_s,
+          ) %>% 
+          filter(
+            age_1 < age_2
+          ) %>% 
+          # get F1 for each.
+          left_join(
+            in_dat %>% 
+              rename(age_1 = age_s, F_1 = F_lob2, collect_1 = collect),
+            by = "age_1"
+          ) %>% 
+          left_join(
+            in_dat %>% 
+              # get gender from the first one.
+              select(-gender) %>% 
+              rename(age_2 = age_s, F_2 = F_lob2, collect_2 = collect),
+            by = "age_2"
+          ) %>% 
+          mutate(
+            diff = F_2 - F_1
+          )
+        out_dat
+      }
+    )
+  ) %>% 
+  select(-data) %>% 
+  unnest(diffs)
+  
+  age_1_preds <- differences %>% 
+    rename(
+      age_s = age_1,
+      collect = collect_1
+    ) %>% 
+    mutate(
+      w_s = "nonword",
+      duration_s = 0,
+      stopword = TRUE
+    ) %>% 
+    ungroup() %>% 
+    # Basic idea: take 100 draws then take the mean.
+    add_epred_draws(
+      object = mod,
+      ndraws = 100,
+      allow_new_levels = TRUE
+    ) %>% 
+    group_by(participant) %>% 
+    summarise(
+      age_1 = first(age_s), 
+      collect_1 = first(collect),
+      gender = first(gender),
+      F_1 = mean(.epred)
+    )
+
+  age_2_preds <- differences %>% 
+    rename(
+      age_s = age_2,
+      collect = collect_2
+    ) %>% 
+    mutate(
+      w_s = "nonword",
+      duration_s = 0,
+      stopword = TRUE
+    ) %>% 
+    ungroup() %>% 
+    add_epred_draws(
+      object = mod,
+      ndraws = 100,
+      allow_new_levels = TRUE
+    ) %>% 
+    group_by(participant) %>% 
+    summarise(
+      age_2 = first(age_s), 
+      collect_2 = first(collect),
+      gender = first(gender),
+      F_2 = mean(.epred)
+    )
+  
+  all_diffs <- bind_rows(
+    "data" = differences,
+    "preds" = left_join(
+        age_1_preds, 
+        age_2_preds, 
+        by = c("participant", "gender")
+      ) %>% 
+      mutate(diff = F_2 - F_1),
+    .id = "source"
+  )
+
+  all_diffs
+}
+
+diff_plot <- function(all_diffs) {
+  all_diffs %>% 
+    ggplot(
+      aes(
+        fill = source,
+        colour = source,
+        x = diff
+      )
+    ) +
+    geom_density(alpha = 0.2) +
+    geom_vline(
+      aes(
+        xintercept = mean_diff,
+        colour = source
+      ),
+      data = ~ .x %>% group_by(source, gender) %>% summarise(mean_diff = mean(diff))
+    ) +
+    facet_wrap(vars(gender))
+}
+
+
+diff_check(dress_f1_fit, dress_f1_data) %>% 
+  diff_plot()
+```
+@fig-dress-long-test displays the distribution of predicted values across 100 draws
+from the posterior distribution (blue) for each difference between collection
+points in the real data (red). The horizontal lines indicate the mean difference
+between collection subsequent collection points as predicted (blue) and actually
+measured (red). We facet by gender.
+
+A model which fully captured all the sources of variation in the changes 
+in formant values between collection points would have the an overlapping
+distribution here. That is not the case here. Our model obviously does not
+capture some of this variation (perhaps this is unsurprising as we don't
+directly model it!). Looking at the vertical lines, we seem to be 
+underestimating the vowel space rising for female preschoolers and slightly
+overestimating the (very small) mean change in the male preschoolers.
+
+We now plot smooths for both male and female preschoolers using the `modelbased`
+package to generate predictions across both age and duration.
+
+First, duration:
+```{r}
+#| label: fig-dress-duration-1
+estimate_relation(dress_f1_fit, by = "duration_s", predict="link", ci = 0.9) %>% 
+  plot() +
+  scale_y_reverse()
+```
+This is not the pattern we expect. As the duration of the vowel increases, it
+gets _lower_ in the vowel space (note, reversed y-axis!). As a stand-in for
+speech rate, this is not what we expect. That is, with slower speech, we'd
+expect less reduction, and so a higher and fronter [dress]{.smallcaps}. Note the
+large confidence bars, though.
+
+```{r}
+#| label: fig-dress-age-1
+dress_f1_preds <- estimate_relation(
+    dress_f1_fit, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = c(0.9, 0.7)
+  )
+  
+dress_f1_preds %>% 
+  plot() +
+  scale_y_reverse()
+```
+
+In @fig-dress-age-1, the $y$-axis is flipped, so that a rising line indicates a
+rising vowel in the vowel space. We see that, for the female children, there is
+a steady rise in the [dress]{.smallcaps}, albeit with wide error bars. We plot
+both the 70% and 90% credible intervals to give a more graded sense of model
+uncertainty.
+
+For our convenience for subsequent models, the following function generates
+all the smooth plots we are interested in. This time, just with a 90% 
+interval.
+
+```{r}
+# This model uses the original `kids` dataframe as a global variable.
+# Not good programming practice, but convenient in this case.
+model_plots <- function(model) {
+  dur_plot <- 
+    estimate_relation(
+      model, 
+      by = "duration_s", 
+      predict="link", ci = 0.9
+    ) %>% 
+    plot() +
+    scale_y_reverse()
+ 
+  age_plot <- 
+    estimate_relation(
+      model, 
+      by = c("age_s", "gender", "duration_s = 0"),
+      predict="link",
+      ci = 0.9
+    ) %>% 
+    plot() +
+    scale_y_reverse()
+    
+    
+  age_plot + dur_plot
+}
+```
+
+Test it's what we expect:
+```{r}
+#| label: fig-dress-mod-plots
+model_plots(dress_f1_fit) + plot_annotation(
+  title = "DRESS F1"
+)
+```
+
+Looking good. 
+
+For [dress]{.smallcaps}, [fleece]{.smallcaps} and [kit]{.smallcaps} we report
+a distribution for difference between 50 months and 60 months. In this 
+supplementary document, we'll provide this for all models.
+
+```{r}
+#| label: fig-ten-dress-f1
+# Want to take samples from 50 months and 60 months.
+sample_points = c(
+  ## What are 50 and 60 in age_s?
+  (50 - mean(kids$age)) / sd(kids$age),
+  # = -1.09
+  (60 - mean(kids$age)) / sd(kids$age)
+  # = 1.4
+)
+
+ten_month_preds <- function(mod, sample_points) {
+  preds <- 
+    expand_grid(
+      "age_s" = sample_points,
+      "gender" = c("F", "M"),
+    ) %>% 
+    mutate(
+      stopword = FALSE,
+      duration_s = 0,
+      w_s = "not",
+      p_c = "real"
+    ) |> 
+    add_epred_draws(
+      mod, 
+      re_formula = NA, 
+      allow_new_levels=TRUE, 
+      ndraws=1000
+    ) %>% 
+    ungroup() %>% 
+    mutate(
+      age = if_else(
+        between(age_s, sample_points[[1]]-0.01, sample_points[[1]]+0.01),
+        "m50",
+        "m60"
+      )
+    ) %>% 
+    select(.draw, gender, age, .epred) %>% 
+    pivot_wider(
+      names_from = age,
+      values_from = .epred
+    ) %>% 
+    mutate(
+      .draw = .draw,
+      gender = gender,
+      diff = m60 - m50,
+      .keep = "none"
+    ) 
+}
+
+dress_f1_10 <- ten_month_preds(dress_f1_fit, sample_points)
+  
+dress_f1_10 %>% 
+  ggplot(
+    aes(
+      x = diff,
+      colour = gender,
+      fill = gender
+    )
+  ) +
+  geom_density(linewidth = 1, alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed")
+```
+
+
+
+Now we move on to the second formant.
+
+
+##### F2
+
+```{r}
+dress_f2_data <- f2 |> 
+  filter(
+    vowel == "DRESS"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+
+summary(dress_f2_data)
+```
+
+```{r}
+#| eval: false
+dress_f2_fit <- brm(
+    F2_lob2 ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = dress_f2_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.99),
+  )
+
+write_rds(
+  dress_f2_fit, 
+  here('models', 'dress_f2_fit_t.rds'), 
+  compress = "gz"
+)
+```
+
+```{r}
+dress_f2_fit <- read_rds(here('models', 'dress_f2_fit_t.rds'))
+```
+
+```{r}
+summary(dress_f2_fit)
+```
+
+We won't explicitly comment on plots unless something striking emerges. 
+
+```{r}
+#| label: fig-dress-f2-ppd
+pp_check(dress_f2_fit, type="dens_overlay_grouped", group="gender", ndraws = 100) +
+  labs(
+    title = "PPD check (DRESS F2)"
+  )
+```
+
+```{r}
+#| label: fig-dress-f2-ppd-2
+pp_check(dress_f2_fit, type = "stat_2d", stat = c("min", "max"), ndraws = 100) +
+  labs(
+    title = "PPD check (DRESS F2)"
+  )
+```
+
+```{r}
+#| label: fig-dress-f2-qq
+dress_f2_data %>%
+  add_residual_draws(dress_f2_fit) %>%
+  median_qi() %>%
+  ggplot(aes(sample = .residual)) +
+  geom_qq() +
+  geom_qq_line()
+```
+
+
+
+```{r}
+#| label: fig-dress-f2-modplots
+model_plots(dress_f2_fit) + 
+  plot_annotation(title = "DRESS F2")
+```
+No change which we can be confident of predicted here.
+
+We generate predictions.
+
+```{r}
+#| label: fig-dress-f2-long-test
+dress_f2_preds <- estimate_relation(
+    dress_f2_fit, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = c(0.9, 0.7)
+  )
+```
+
+```{r}
+#| label: fig-ten-dress-f2
+dress_f2_10 <- ten_month_preds(dress_f2_fit, sample_points)
+dress_f2_10 %>% 
+  ggplot(
+    aes(
+      x = diff,
+      colour = gender,
+      fill = gender
+    )
+  ) +
+  geom_density(linewidth = 1, alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed")
+```
+
+Once we are done with plotting the models for a particular vowel, we remove 
+them from the R environment to free up space for the next models.
+
+```{r}
+rm(dress_f1_fit, dress_f2_fit)
+```
+
+#### [kit]{.smallcaps}
+
+##### F1
+
+```{r}
+kit_f1_data <- f1 |> 
+  filter(
+    vowel == "KIT"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+
+
+summary(kit_f1_data)
+```
+
+
+```{r}
+#| eval: false
+kit_f1_fit <- brm(
+    F1_lob2 ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),,
+    data = kit_f1_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 4000,
+    control = list(adapt_delta = 0.99),
+  )
+
+write_rds(
+  kit_f1_fit, 
+  here('models', 'kit_f1_fit_t.rds'), 
+  compress = "gz"
+)
+```
+
+```{r}
+kit_f1_fit <- read_rds(here('models', 'kit_f1_fit_t.rds'))
+```
+
+
+
+```{r}
+summary(kit_f1_fit)
+```
+
+
+
+```{r}
+#| label: fig-kit-ppd-f1-1
+pp_check(kit_f1_fit, ndraws = 100) +
+  labs(
+    title = "PPD check (KIT F1)"
+  ) 
+```
+
+
+```{r}
+#| label: fig-kit-ppd-f1-2
+pp_check(kit_f1_fit, type="dens_overlay_grouped", group="gender", ndraws = 100) +
+  labs(
+    title = "PPD check (KIT F1)"
+  )
+```
+
+```{r}
+#| label: fig-kit-ppd-f1-3
+pp_check(kit_f1_fit, type = "stat_2d", stat = c("min", "max"), ndraws = 100) +
+  labs(
+    title = "PPD check (KIT F1)"
+  )
+```
+
+```{r}
+#| label: fig-kit-modplot-f1
+model_plots(kit_f1_fit) + 
+  plot_annotation(title = "KIT F1")
+```
+Female preschoolers look like they are lowering [kit] in the vowel space. 
+
+
+```{r}
+kit_f1_preds <- estimate_relation(
+    kit_f1_fit, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = c(0.9, 0.7)
+  )
+```
+
+Let's see if the lowering patterns shows up in the data, viewed longitudinally.
+
+```{r}
+#| label: fig-kit-longcheck-f1
+diff_check(kit_f1_fit, kit_f1_data) %>% 
+  diff_plot()
+```
+
+@fig-kit-longcheck-f1 is a little chaotic. We see that a lot of the predictions
+are crushed into a a tight range in our predictions. We've divided by gender
+as the pattern identified only seems clear in the female speakers. In both
+cases, the shifts between sessions are in the positive direction, although the
+distribution sits very close to zero! In any case, what we are looking for here
+is significant _incompatibility_ between the distribution of shifts between
+collection points and the corresponding model predictions.
+
+```{r}
+#| label: fig-ten-kit-f1
+kit_f1_10 <- ten_month_preds(kit_f1_fit, sample_points)
+kit_f1_10 %>% 
+  ggplot(
+    aes(
+      x = diff,
+      colour = gender,
+      fill = gender
+    )
+  ) +
+  geom_density(linewidth = 1, alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed")
+```
+
+##### F2
+
+```{r}
+kit_f2_data <- f2 |> 
+  filter(
+    vowel == "KIT"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+
+
+summary(kit_f2_data)
+```
+
+
+```{r}
+#| eval: false
+kit_f2_fit <- brm(
+    F2_lob2 ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = kit_f2_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 5000,
+    control = list(adapt_delta = 0.99),
+  )
+
+write_rds(kit_f2_fit, here('models', 'kit_f2_fit_t.rds'), compress = "gz")
+```
+
+```{r}
+kit_f2_fit <- read_rds(here('models', 'kit_f2_fit_t.rds'))
+```
+
+
+
+```{r}
+summary(kit_f2_fit)
+```
+
+
+
+```{r}
+#| label: fig-kit-ppd-f2-1
+pp_check(kit_f2_fit, ndraws = 100) +
+  labs(
+    title = "PPD check (KIT F1)"
+  ) 
+```
+
+
+```{r}
+#| label: fig-kit-ppd-f2-2
+pp_check(kit_f2_fit, type="dens_overlay_grouped", group="gender", ndraws = 100) +
+  labs(
+    title = "PPD check (KIT F1)"
+  )
+```
+
+
+```{r}
+#| label: fig-kit-ppd-f2-3
+pp_check(kit_f2_fit, type = "stat_2d", stat = c("min", "max"), ndraws = 100) +
+  labs(
+    title = "PPD check (KIT F2)"
+  )
+```
+
+```{r}
+#| label: fig-kit-modplots-f2
+model_plots(kit_f2_fit) + 
+  plot_annotation(title = "KIT F2")
+```
+
+```{r}
+kit_f2_preds <- estimate_relation(
+    kit_f2_fit, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = c(0.9, 0.7)
+  )
+```
+
+There appears to be a backing in the vowel space for male preschoolers. Let's
+see if this aligns with the data viewed longitudinally.
+
+```{r}
+#| label: fig-kit-diffcheck-f2
+diff_check(kit_f2_fit, kit_f2_data) %>% 
+  diff_plot()
+```
+@fig-kit-diffcheck-f2 shows that our predictions are very tight and don't 
+particularly match the longitudinal data. For the male preschoolers we predict 
+no change, but the longitudinal data suggests backing (as does our smooth). 
+The female means appear on either side of zero for the predictions and the
+real longitudinal data. But we do not predict any significant change for 
+female preschoolers in @fig-kit-modplots-f2.
+
+
+```{r}
+#| label: fig-ten-kit-f2
+kit_f2_10 <- ten_month_preds(kit_f2_fit, sample_points)
+kit_f2_10 %>% 
+  ggplot(
+    aes(
+      x = diff,
+      colour = gender,
+      fill = gender
+    )
+  ) +
+  geom_density(linewidth = 1, alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed")
+```
+
+```{r}
+rm(
+  kit_f1_fit,
+  kit_f2_fit
+)
+```
+
+#### [nurse]{.smallcaps}
+
+##### F1
+
+```{r}
+nurse_f1_data <- f1 |> 
+  filter(
+    vowel == "NURSE"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+
+
+summary(nurse_f1_data)
+```
+
+```{r}
+#| eval: false
+nurse_f1_fit <- brm(
+    F1_lob2 ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = nurse_f1_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.9),
+  )
+
+write_rds(nurse_f1_fit, here('models', 'nurse_f1_fit_t.rds'), compress = "gz")
+```
+
+```{r}
+nurse_f1_fit <- read_rds(here('models', 'nurse_f1_fit_t.rds'))
+```
+
+
+```{r}
+summary(nurse_f1_fit)
+```
+
+
+
+```{r}
+#| label: fig-nurse-f1-ppd-1
+pp_check(nurse_f1_fit, ndraws = 100) +
+  labs(
+    title = "PPD check (NURSE F1)"
+  ) 
+```
+
+
+
+
+```{r}
+#| label: fig-nurse-f1-ppd-2
+pp_check(nurse_f1_fit, type = "stat_2d", stat = c("min", "max"), ndraws = 100) +
+  labs(
+    title = "PPD check (KIT F1)"
+  )
+```
+
+```{r}
+#| label: fig-nurse-f1-modplots
+model_plots(nurse_f1_fit) + 
+  plot_annotation(title = "NURSE F1")
+```
+```{r}
+nurse_f1_preds <- estimate_relation(
+    nurse_f1_fit, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = c(0.9, 0.7)
+  )
+```
+
+```{r}
+#| label: fig-nurse-f1-diffcheck
+diff_check(nurse_f1_fit, nurse_f1_data) %>% 
+  diff_plot()
+```
+
+Out models predict some change over time for male preschoolers which, when the
+data is view longitudinally, looks even more extreme. We do not make a big 
+deal of this, given the wide error bars on our models.
+
+
+```{r}
+#| label: fig-ten-nurse-f1
+nurse_f1_10 <- ten_month_preds(nurse_f1_fit, sample_points)
+nurse_f1_10 %>% 
+  ggplot(
+    aes(
+      x = diff,
+      colour = gender,
+      fill = gender
+    )
+  ) +
+  geom_density(linewidth = 1, alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed")
+```
+
+##### F2
+
+```{r}
+nurse_f2_data <- f2 |> 
+  filter(
+    vowel == "NURSE"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+
+
+summary(nurse_f2_data)
+```
+
+
+```{r}
+#| eval: false
+nurse_f2_fit <- brm(
+    F2_lob2 ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = nurse_f2_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 4000,
+    control = list(adapt_delta = 0.9),
+  )
+
+write_rds(nurse_f2_fit, here('models', 'nurse_f2_fit_t.rds'), compress = "gz")
+```
+
+```{r}
+nurse_f2_fit <- read_rds(here('models', 'nurse_f2_fit_t.rds'))
+```
+
+
+```{r}
+summary(nurse_f2_fit)
+```
+
+
+
+```{r}
+#| label: fig-ppd-f2-nurse-1
+pp_check(nurse_f2_fit, ndraws = 100) +
+  labs(
+    title = "PPD check (NURSE F2)"
+  ) 
+```
+
+
+```{r}
+#| label: fig-ppd-f2-nurse-3
+pp_check(nurse_f1_fit, type="dens_overlay_grouped", group="gender", ndraws = 100) +
+  labs(
+    title = "PPD check (NURSE F2)"
+  )
+```
+
+
+```{r}
+#| label: fig-ppd-f2-nurse-4
+pp_check(nurse_f2_fit, type = "stat_2d", stat = c("min", "max"), ndraws = 100) +
+  labs(
+    title = "PPD check (NURSE F2)"
+  )
+```
+
+```{r}
+#| label: fig-modplots-f2-nurse-1
+model_plots(nurse_f2_fit) + 
+  plot_annotation(title = "NURSE F2")
+```
+
+```{r}
+nurse_f2_preds <- estimate_relation(
+    nurse_f2_fit, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = c(0.9, 0.7)
+  )
+```
+
+```{r}
+#| label: fig-diffcheck-f2-nurse
+diff_check(nurse_f2_fit, nurse_f2_data) %>% 
+  diff_plot()
+```
+We won't be taking [nurse]{.smallcaps} seriously in the paper. Nonetheless, it
+is interesting to see how narrow the distribution of predicted differencess
+between sessions is in our models compared to the real range of variation
+between sessions (which can just be seen at the bottom of the plot).
+
+```{r}
+#| label: fig-ten-nurse-f2
+nurse_f2_10 <- ten_month_preds(nurse_f2_fit, sample_points)
+nurse_f2_10 %>% 
+  ggplot(
+    aes(
+      x = diff,
+      colour = gender,
+      fill = gender
+    )
+  ) +
+  geom_density(linewidth = 1, alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed")
+```
+
+```{r}
+rm(
+  nurse_f1_fit,
+  nurse_f2_fit
+)
+```
+
+
+
+#### [trap]{.smallcaps}
+
+##### F1
+
+```{r}
+trap_f1_data <- f1 |> 
+  filter(
+    vowel == "TRAP"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+
+
+summary(trap_f1_data)
+```
+
+
+```{r}
+#| eval: false
+trap_f1_fit <- brm(
+    F1_lob2 ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = trap_f1_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.9),
+  )
+
+write_rds(trap_f1_fit, here('models', 'trap_f1_fit_t.rds'), compress = "gz")
+```
+
+```{r}
+trap_f1_fit <- read_rds(here('models', 'trap_f1_fit_t.rds'))
+```
+
+
+
+```{r}
+summary(trap_f1_fit)
+```
+
+
+
+```{r}
+#| label: fig-ppd-f1-trap-1
+pp_check(trap_f1_fit, ndraws = 100) +
+  labs(
+    title = "PPD check (TRAP F1)"
+  ) 
+```
+
+
+```{r}
+#| label: fig-ppd-f1-trap-2
+pp_check(trap_f1_fit, type="dens_overlay_grouped", group="gender", ndraws = 100) +
+  labs(
+    title = "PPD check (TRAP F1)"
+  )
+```
+
+
+```{r}
+#| label: fig-ppd-f1-trap-3
+pp_check(trap_f1_fit, type = "stat_2d", stat = c("min", "max"), ndraws = 100) +
+  labs(
+    title = "PPD check (TRAP F1)"
+  )
+```
+
+```{r}
+#| label: fig-modplots-f1-trap
+model_plots(trap_f1_fit) + 
+  plot_annotation(title = "TRAP F1")
+```
+
+```{r}
+trap_f1_preds <- estimate_relation(
+    trap_f1_fit, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = c(0.9, 0.7)
+  )
+```
+
+```{r}
+#| label: fig-diffcheck-f1-trap-2
+diff_check(trap_f1_fit, trap_f1_data) %>% 
+  diff_plot()
+```
+
+```{r}
+#| label: fig-ten-trap-f1
+trap_f1_10 <- ten_month_preds(trap_f1_fit, sample_points)
+trap_f1_10 %>% 
+  ggplot(
+    aes(
+      x = diff,
+      colour = gender,
+      fill = gender
+    )
+  ) +
+  geom_density(linewidth = 1, alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed")
+```
+
+##### F2
+
+```{r}
+trap_f2_data <- f2 |> 
+  filter(
+    vowel == "TRAP"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+
+summary(trap_f2_data)
+```
+
+
+
+```{r}
+#| eval: false
+trap_f2_fit <- brm(
+    F2_lob2 ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = trap_f2_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 4000,
+    control = list(adapt_delta = 0.99),
+  )
+
+write_rds(trap_f2_fit, here('models', 'trap_f2_fit_t.rds'), compress = "gz")
+```
+
+
+```{r}
+trap_f2_fit <- read_rds(here('models', 'trap_f2_fit_t.rds'))
+```
+
+
+
+```{r}
+summary(trap_f2_fit)
+```
+
+
+
+```{r}
+#| label: fig-ppd-f2-trap-1
+pp_check(trap_f2_fit, ndraws = 100) +
+  labs(
+    title = "PPD check (TRAP F2)"
+  ) 
+```
+
+
+```{r}
+#| label: fig-ppd-f2-trap-2
+pp_check(trap_f2_fit, type="dens_overlay_grouped", group="gender", ndraws = 100) +
+  labs(
+    title = "PPD check (TRAP F2)"
+  )
+```
+
+
+```{r}
+#| label: fig-ppd-f2-trap-3
+pp_check(trap_f2_fit, type = "stat_2d", stat = c("min", "max"), ndraws = 100) +
+  labs(
+    title = "PPD check (TRAP F2)"
+  )
+```
+
+```{r}
+#| label: fig-modplot-f2-trap
+model_plots(trap_f2_fit) + 
+  plot_annotation(title = "TRAP F2")
+```
+
+
+```{r}
+trap_f2_preds <- estimate_relation(
+    trap_f2_fit, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = c(0.9, 0.7)
+  )
+```
+
+
+```{r}
+#| label: fig-ten-trap-f2
+trap_f2_10 <- ten_month_preds(trap_f2_fit, sample_points)
+trap_f2_10 %>% 
+  ggplot(
+    aes(
+      x = diff,
+      colour = gender,
+      fill = gender
+    )
+  ) +
+  geom_density(linewidth = 1, alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed")
+```
+
+```{r}
+rm(
+  trap_f1_fit,
+  trap_f2_fit
+)
+```
+
+#### [fleece]{.smallcaps}
+
+##### F1
+
+```{r}
+fleece_f1_data <- f1 |> 
+  filter(
+    vowel == "FLEECE"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+
+
+summary(fleece_f1_data)
+```
+
+```{r}
+#| eval: false
+fleece_f1_fit <- brm(
+    F1_lob2 ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = fleece_f1_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.9),
+  )
+
+write_rds(fleece_f1_fit, here('models', 'fleece_f1_fit_t.rds'), compress = "gz")
+```
+
+
+
+```{r}
+fleece_f1_fit <- read_rds(here('models', 'fleece_f1_fit_t.rds'))
+```
+
+
+
+```{r}
+summary(fleece_f1_fit)
+```
+
+
+
+```{r}
+#| label: fig-ppd-f1-fleece-1
+pp_check(fleece_f1_fit, ndraws = 100) +
+  labs(
+    title = "PPD check (FLEECE F1)"
+  ) 
+```
+
+
+```{r}
+#| label: fig-ppd-f1-fleece-2
+pp_check(fleece_f1_fit, type="dens_overlay_grouped", group="gender", ndraws = 100) +
+  labs(
+    title = "PPD check (FLEECE F1)"
+  )
+```
+
+
+```{r}
+#| label: fig-ppd-f1-fleece-3
+pp_check(fleece_f1_fit, type = "stat_2d", stat = c("min", "max"), ndraws = 100) +
+  labs(
+    title = "PPD check (FLEECE F1)"
+  )
+```
+
+```{r}
+#| label: fig-modplots-f1-fleece
+model_plots(fleece_f1_fit) + 
+  plot_annotation(title = "FLEECE F1")
+```
+
+```{r}
+fleece_f1_preds <- estimate_relation(
+    fleece_f1_fit, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = c(0.9, 0.7)
+  )
+```
+
+```{r}
+#| label: fig-diffplot-f1-fleece-1
+diff_check(fleece_f1_fit, fleece_f1_data) %>% 
+  diff_plot()
+```
+
+We claim F1 movement for female preschoolers in the paper and this matches the 
+mean difference for female preschoolers when the data is viewed longitudinally.
+
+
+```{r}
+#| label: fig-ten-fleece-f1
+fleece_f1_10 <- ten_month_preds(fleece_f1_fit, sample_points)
+fleece_f1_10 %>% 
+  ggplot(
+    aes(
+      x = diff,
+      colour = gender,
+      fill = gender
+    )
+  ) +
+  geom_density(linewidth = 1, alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed")
+```
+
+##### F2
+
+```{r}
+fleece_f2_data <- f2 |> 
+  filter(
+    vowel == "FLEECE"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+
+summary(fleece_f2_data)
+```
+
+
+```{r}
+#| eval: false
+fleece_f2_fit <- brm(
+    F2_lob2 ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = fleece_f2_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 4000,
+    control = list(adapt_delta = 0.9),
+  )
+
+write_rds(
+  fleece_f2_fit, 
+  here('models', 'fleece_f2_fit_t.rds'), 
+  compress = "gz"
+)
+```
+
+
+```{r}
+fleece_f2_fit <- read_rds(here('models', 'fleece_f2_fit_t.rds'))
+```
+
+
+
+```{r}
+summary(fleece_f2_fit)
+```
+
+
+
+```{r}
+#| label: fig-ppd-fleece-f2-1
+pp_check(fleece_f2_fit, ndraws = 100) +
+  labs(
+    title = "PPD check (FLEECE F2)"
+  ) 
+```
+
+
+```{r}
+#| label: fig-ppd-fleece-f2-2
+pp_check(fleece_f2_fit, type="dens_overlay_grouped", group="gender", ndraws = 100) +
+  labs(
+    title = "PPD check (FLEECE F2)"
+  )
+```
+
+
+```{r}
+#| label: fig-ppd-fleece-f2-3
+pp_check(fleece_f2_fit, type = "stat_2d", stat = c("min", "max"), ndraws = 100) +
+  labs(
+    title = "PPD check (FLEECE F2)"
+  )
+```
+
+```{r}
+#| label: fig-modplots-fleece-f2
+model_plots(fleece_f2_fit) + 
+  plot_annotation(title = "FLEECE F2")
+```
+
+
+```{r}
+fleece_f2_preds <- estimate_relation(
+    fleece_f2_fit, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = c(0.9, 0.7)
+  )
+```
+
+```{r}
+#| label: fig-ten-fleece-f2
+fleece_f2_10 <- ten_month_preds(fleece_f2_fit, sample_points)
+fleece_f2_10 %>% 
+  ggplot(
+    aes(
+      x = diff,
+      colour = gender,
+      fill = gender
+    )
+  ) +
+  geom_density(linewidth = 1, alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed")
+```
+
+```{r}
+rm(fleece_f1_fit, fleece_f2_fit)
+```
+
+:::
+
+## Summary Plots
+
+Let's plot differences from 50 to 60 months for _all_ models and then for the
+models which we have identified for the paper.
+
+```{r}
+#| label: fig-allvar-change
+age_change_preds <- list_rbind(
+  list(
+    "DRESS F1" = dress_f1_10,
+    "DRESS F2" = dress_f2_10,
+    "KIT F1" = kit_f1_10,
+    "KIT F2" = kit_f2_10,
+    "NURSE F1" = nurse_f1_10,
+    "NURSE F2" = nurse_f2_10,
+    "TRAP F1" = trap_f1_10,
+    "TRAP F2" = trap_f2_10,
+    "FLEECE F1" = fleece_f1_10,
+    "FLEECE F2" = fleece_f2_10
+  ),
+  names_to = "variable"
+)
+
+age_change_preds %>% 
+  group_by(variable, gender) %>% 
+  summarise(
+    median = median(diff),
+    fifth = quantile(diff, probs = 0.05),
+    ninetyfifth = quantile(diff, probs = 0.95)
+  ) %>% 
+  ggplot(
+    aes(
+      y = variable,
+      x = median,
+      xmin = fifth,
+      xmax = ninetyfifth,
+      colour = gender
+    )
+  ) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_errorbar(position = position_dodge(width=0.7), linewidth=1) +
+  geom_point(position = position_dodge(width=0.7), size=2) +
+  labs(
+    x = "Difference from 50 months to 60 months (Lobanov 2.0)",
+    y = NULL,
+    colour = "Gender"
+  )
+```
+
+Now the specific variables.
+```{r}
+#| label: fig-subset-change
+subset_change <- age_change_preds %>% 
+  filter(
+    variable %in% c("DRESS F1", "FLEECE F1", "KIT F1", "KIT F2")
+  ) %>% 
+  group_by(variable, gender) %>% 
+  summarise(
+    median = median(diff),
+    fifth = quantile(diff, probs = 0.05),
+    ninetyfifth = quantile(diff, probs = 0.95)
+  ) %>% 
+  ggplot(
+    aes(
+      y = variable,
+      x = median,
+      xmin = fifth,
+      xmax = ninetyfifth,
+      colour = gender
+    )
+  ) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_errorbar(position = position_dodge(width=0.7), linewidth=1) +
+  geom_point(position = position_dodge(width=0.7), size=2) +
+  labs(
+    x = "Difference from 50 months to 60 months (Lobanov 2.0)",
+    y = NULL,
+    colour = "Gender"
+  )
+
+ggsave(
+  filename = here('plots', 'figure6_tenmonth.tiff'),
+  plot = subset_change,
+  width = 7,
+  height = 5,
+  dpi = 300
+)
+
+subset_change
+```
+
+# QuakeBox models
+
+## Fit
+
+Here we fit GAMM models with similar structures to the QuakeBox (QB). 
+We borrow code from another project ([Hurring et al. 2025](https://github.com/nzilbb/qb_stability_public)). We modify the anonymisation
+script from that project in order to create a stopword variable.  
+This is a very long section of code, so we have 'folded' it by default.
+First we load up the data and output some token counts which we will add to the
+paper.
+```{r}
+#| code-fold: true
+# Check age factor is in the right order.
+QB1$age |> factor() |> levels()
+# [1] "18-25" "26-35" "36-45" "46-55" "56-65" "66-75" "76-85" "85+"  
+# yes
+
+# Various variable changes in order to fit a GAMM. We scale variables in 
+# order to improve model fit and ease of interpretation.
+QB1 <- QB1 |>
+  mutate(
+    age_category_numeric = as.integer(factor(age)),
+    speaker = as.factor(speaker),
+    gender = as.factor(gender),
+    word = as.factor(word),
+    stopword = as.factor(stopword),
+    stressed = as.factor(!unstressed),
+    log_freq = log(celex_frequency + 1),
+    log_freq_s = scale(log_freq)[,1],
+    age_cat_s = scale(age_category_numeric)[,1],
+    w_s = interaction(word, stressed)
+  ) %>% 
+  group_by(vowel) %>% 
+  mutate(
+    duration_s = scale(vowel_end - vowel_start)[,1]
+  ) %>% 
+  filter(
+    duration_s < 2.5
+  ) %>% 
+  ungroup()
+
+QB1_caregivercount <- QB1 |> 
+  filter(
+    vowel %in% c(
+      "DRESS",
+      "FLEECE",
+      "TRAP",
+      "KIT",
+      "NURSE"
+    ),
+    gender == "f",
+    age_category_numeric %in% c(1, 2)
+  ) |> 
+  mutate(
+    n = n_distinct(speaker)
+  )
+# 24627 tokens from notional caregiver generation.
+cat('Tokens from caregiver generation: ', nrow(QB1_caregivercount), '\n')
+
+QB1_oldestgeneration <- QB1 |> 
+  filter(
+    vowel %in% c(
+      "DRESS",
+      "FLEECE",
+      "TRAP",
+      "KIT",
+      "NURSE"
+    ),
+    gender == "f",
+    age_category_numeric %in% c(7, 8)
+  ) |> 
+  mutate(
+    n = n_distinct(speaker)
+  )
+# 4992 tokens from oldest generation.
+cat('Tokens from oldest generation: ', nrow(QB1_oldestgeneration), '\n')
+
+# 45 speakers in notional caregiver generation.
+cat('Caregivers: ', QB1_caregivercount$n[[1]], '\n')  
+
+# 18 speakers in oldest generation
+cat('Oldest: ', QB1_oldestgeneration$n[[1]])
+```
+
+We output some further information for tables in the paper:
+
+```{r}
+QB1 %>% 
+  group_by(speaker) %>% 
+  summarise(gender = first(gender)) %>% 
+  count(gender)
+```
+
+What are the counts for each vowel category?
+```{r}
+# front vowel counts
+qb_counts <- QB1 %>% 
+  count(vowel)
+
+qb_counts
+```
+
+How many speakers are there in each age and gender category?
+```{r}
+QB1 %>% 
+  group_by(age, gender) %>% 
+  summarise(
+    n_speakers = n_distinct(speaker)
+  )
+```
+
+
+The total number of tokens is `r sum(qb_counts$n)`. The total number of 
+short front vowel tokens is `r sum(qb_counts$n[qb_counts$vowel %in% short_front])`
+
+Now we fit the models specified here uses nearly 40GB of RAM.
+Researchers
+with less access to computation may need to fit the models one-at-a-time rather
+than keeping all in memory at once. The very large size of these models is
+due to the complexity of the random effects structure.
+
+```{r}
+#| eval: false
+relevant_to_fix <- list.files(here('models'), pattern = "QB1", full.names=T)
+
+for (fn in relevant_to_fix) {
+  #mod <- read_rds(fn)
+  #qs_save(mod, )
+  qs2::rds_to_qs(fn, str_replace_all(fn, "rds", "qs2"))
+}
+```
+
+
+```{r}
+#| code-fold: true
+#| eval: true
+
+QB1_models <- QB1 %>%
+  select(
+    -F1_50, -F2_50
+  ) %>%
+  pivot_longer(
+    cols = F1_lob2:F2_lob2,
+    names_to = "formant_type",
+    values_to = "formant_value"
+  ) %>%
+  group_by(vowel, formant_type) %>%
+  nest() %>%
+  mutate(
+    data = map(data, droplevels),
+    model = map2(
+      data,
+      str_c(vowel, formant_type),
+      ~ {
+        if (file.exists(
+          here('models', paste0('QB1_', .y, '_t.qs2'))
+        )) {
+          mod <- qs_read(here('models', paste0('QB1_', .y, '_t.qs2')))
+        } else {
+          
+          mod <- brm(
+            formant_value ~ gender + stopword + 
+              s(age_cat_s, by=gender, k = 5) +
+              s(duration_s, k = 5) +
+              (1 | w_s) +
+              (1 | speaker),
+            data = .x,
+            family = student(),
+            prior = prior_t,
+            chains = 4,
+            cores = 4,
+            iter = 2000,
+            control = list(adapt_delta = 0.99)
+          )
+        
+        qs_save(mod, here('models', paste0('QB1_', .y, '_t.qs2')), nthreads=8L)
+      }
+        
+      mod
+      }
+    )
+  )
+```
+
+
+## Diagnostics
+
+We'll have a quick look at some posterior predictive checks.
+```{r}
+#| eval: false
+ppd_plots <- list()
+for (i in 1:nrow(QB1_models)) {
+  (
+    ppd_plot <- pp_check(
+      QB1_models$model[[i]], 
+      type="dens_overlay_grouped", 
+      group="gender", 
+      ndraws = 100
+    ) +
+    labs(
+      title = "PPD check (DRESS F1)"
+    )
+  ) 
+  ppd_plots <- append(ppd_plots, ppd_plot)
+}
+
+write_rds(ppd_plots, here('data', 'ppd_plots.rds'))
+```
+
+```{r}
+#| label: fig-ppd-qb
+#| include: false
+#| eval: false
+ppd_plots <- read_rds
+(here('data', 'ppd_plots.rds'))
+
+walk2(
+  ppd_plots, 
+  str_c(QB1_models$vowel, QB1_models$formant_type), 
+  ~ print(.x + labs(title=.y))
+)
+```
+
+There's nothing obviously bad here. There is an issue with t-distributions for
+responses is that (by design) they allow large outliers. If you sample from 
+t-distributions multiples times, you will get some crazy values. This explains
+the large x-axis range.
+
+## Generate predictions and plot
+
+First, as a sanity check, we'll look at QB1 change over age categories.
+
+```{r}
+#| label: fig-qb-age-test
+#| fig.lab: | 
+#|   Change over time for KIT F1. Higher values are older speakers.
+test <- estimate_relation(
+  QB1_models$model[[11]],
+  by = c("age_cat_s = seq(-1.79693581, 2.55572475, 0.6218086)", "gender", "duration_s = 0"),
+  predict="link",
+  ci = 0.9
+)
+
+test
+
+plot(test) +
+  labs(
+    title = QB1_models$vowel[[1]],
+    subtitle = QB1_models$formant_type[[1]]
+  )
+```
+
+We do the same for each individual model. First we extract the predictions.
+```{r}
+#| labels: fig-qb1-change-time
+#| fig.caps: |
+#|   Change in QB1 over age categories.
+QB1_preds <- QB1_models %>% 
+  mutate(
+    preds = map(
+      model, 
+      ~ estimate_relation(
+        .x,
+        by = c("age_cat_s = seq(-1.79693581, 2.55572475, 0.6218086/4)", "gender", "duration_s = 0"),
+        predict="link",
+        ci = c(0.6, 0.8, 0.9)
+      )
+    )
+  ) %>% 
+  select(
+    preds
+  ) %>% 
+  unnest(preds)
+  
+# Unstandardise
+QB1_preds <- QB1_preds %>% 
+  mutate(
+    age_cat = mean(QB1$age_category_numeric) + age_cat_s * sd(QB1$age_category_numeric)
+  )
+
+QB1_preds <- QB1_preds %>% 
+  pivot_wider(
+    names_from = formant_type,
+    values_from = c(Predicted, SE, contains("CI"))
+  ) %>% 
+  arrange(desc(age_cat)) 
+
+QB1_preds %>% 
+  ggplot(
+    aes(
+      x = Predicted_F2_lob2,
+      y = Predicted_F1_lob2,
+      colour = vowel,
+      group = vowel,
+      label = vowel
+    )
+  ) +
+  geom_path(linewidth=1, arrow = arrow(length = unit(2, "mm"))) +
+  geom_label(size = 2, data = QB1_preds %>% filter(age_cat == max(age_cat))) +
+  scale_y_reverse() +
+  scale_x_reverse() +
+  facet_grid(cols = vars(gender)) +
+  theme(legend.position = "none")
+```
+@figs-qb1-change-time doesn't show anything too surprising given previous 
+research.
+
+Create columns to identify reference predictions.
+
+```{r}
+QB1_preds <- QB1_preds %>% 
+  mutate(
+    generation = case_when(
+      between(age_cat, 6.9, 8) & gender == "f" ~ "Oldest",
+      between(age_cat, 0.9, 2.1) & gender == "f" ~ "Caregiver",
+      .default = "Other"
+    )
+  )
+```
+
+Now we plot just the extended short front vowel shift. 
+
+
+```{r}
+#| labels: figs-qb1-change-time
+#| fig.caps: |
+#|   Change in QB1 extended short front vowels over age categories in vowel 
+#|   space, with 90% credible intervals. Arrows indicate the youngest speakers.
+ci_boxes <- QB1_preds %>% 
+  group_by(vowel) %>% 
+  filter(
+    age_cat == max(age_cat)
+  ) %>% 
+  mutate(
+    gender = if_else(gender == "f", "Female", "Male"),
+    gender = factor(gender, levels = c("Female", "Male"))
+  ) %>% 
+  group_by(vowel, gender) %>% 
+  nest() %>% 
+  mutate(
+    ci_90 = map(
+      data,
+      ~ {
+        points <- .x %>% 
+          select(
+            CI_high_0.9_F2_lob2, CI_low_0.9_F2_lob2, 
+            CI_high_0.9_F1_lob2, CI_low_0.9_F1_lob2
+          ) %>% 
+          pivot_longer(
+            cols = everything(),
+            names_to = "type",
+            values_to = "value"
+          ) %>%
+          mutate(
+            formant = str_extract(type, "F[1-2]")
+          ) %>% 
+          select(formant, value)
+        out <- crossing(
+          "F1" = points %>% 
+            filter(formant == "F1") %>% 
+            pull(value), 
+          "F2" = points %>% 
+            filter(formant == "F2") %>% 
+            pull(value)
+        )
+        out %>% 
+          # order correctly for polygon.
+          slice(c(1, 2, 4, 3, 1))
+      }
+    )
+  ) %>% 
+  select(-data) %>% 
+  unnest(ci_90) %>% 
+  filter(
+    vowel %in% short_front
+  )
+
+QB1_plot <- QB1_preds %>% 
+  filter(
+    vowel %in% short_front
+  ) %>% 
+  mutate(
+    label = if_else(age_cat == max(age_cat), vowel, ""),
+    gender = if_else(gender == "f", "Female", "Male"),
+    gender = factor(gender, levels = c("Female", "Male"))
+  ) %>% 
+  ggplot(
+    aes(
+      x = Predicted_F2_lob2,
+      y = Predicted_F1_lob2,
+      colour = vowel,
+      group = vowel,
+      label = label
+    )
+  ) +
+  geom_point(data = ~.x %>% filter(age_cat == max(age_cat))) +
+  geom_textpath(
+    aes(
+      x = F2,
+      y = F1,
+      colour = vowel
+    ),
+    label = "90% CI",
+    linetype = "dashed",
+    vjust = 1,
+    size = 2.5,
+    inherit.aes = FALSE,
+    data = ci_boxes
+  ) +
+  geom_polygon(
+    aes(
+      x = F2,
+      y = F1,
+      fill = vowel
+    ),
+    linewidth = 0,
+    alpha = 0.4,
+    inherit.aes = FALSE,
+    data = ci_boxes
+  ) +
+  geom_path(linewidth=1, arrow = arrow(length = unit(2, "mm"), type = "closed")) +
+  geom_label_repel(
+    size = 3, 
+    label.padding = 0.1,
+    fontface = "bold",
+    alpha = 0.8,
+    nudge_x = 0.2,
+    nudge_y = 0.1,
+    min.segment.length = 0
+    ) +
+  scale_y_reverse() +
+  scale_x_reverse() +
+  scale_colour_manual(values = vowel_colours_5) +
+  scale_fill_manual(values = vowel_colours_5) +
+  coord_fixed() +
+  facet_grid(cols = vars(gender)) +
+  theme(legend.position = "none") +
+  labs(
+      x = "F2 (normalised)",
+      y = "F1 (normalised)"
+    )
+
+ggsave(
+  filename = here('plots', 'figure4_QB1.tiff'),
+  plot = QB1_plot,
+  width = 7,
+  height = 5,
+  dpi = 300
+)
+
+QB1_plot
+```
+
+
+# Plots
+
+Having fit a models for each vowel, for both the preschoolers and the community
+corpus, we create plots combining the model predictions with reference
+information from the community and the storyteller.
+
+## Comparison plots
+
+The first set of plots combine our models from the preschoolers and the QuakeBox
+models in a vowel-by-vowel ways.
+
+```{r}
+#| label: fig-dress-f1-comp
+#| fig.cap: |
+#|   DRESS F1 change in preschoolers with 'caregiver' reference.
+comp_plot <- function(model_preds, qb_preds, vowel_name, formant_name) {
+  
+  model_preds <- model_preds %>% 
+    age_in_months(kids)
+  
+  caregiver_ref <- qb_preds %>% 
+        filter(
+          generation == "Caregiver",
+          vowel == vowel_name
+        ) %>% 
+        group_by(generation) %>% 
+        summarise(
+          caregiver_level = if_else(
+            formant_name == "F1", 
+            mean(Predicted_F1_lob2),
+            mean(Predicted_F2_lob2)
+          ),
+          label = "Caregiver level"
+        )
+  
+  out_plot <- model_preds |> 
+    ggplot(
+      aes(
+        x = age,
+        y = Predicted,
+        ymin = CI_low_0.9,
+        ymax = CI_high_0.9,
+        colour = gender,
+        fill = gender
+      )
+    ) +
+    geom_ribbon(alpha=0.2, colour = NA) +
+    geom_line(linewidth = 2) +
+    geom_hline(
+      aes(
+        yintercept = caregiver_level,
+        linetype = label
+      ),
+      data = caregiver_ref
+    ) +
+    scale_y_reverse() +
+    labs(
+      title = paste(vowel_name, formant_name),
+      subtitle = "Model predictions QB1 vs Preschoolers (90% CI)",
+      x = "Age (months)",
+      y = "Normalised formant value (predicted)",
+      colour = "Gender",
+      fill = "Gender",
+      linetype = "Reference"
+    )
+}
+
+comp_plot(dress_f1_preds, QB1_preds, "DRESS", "F1") %>% print()
+```
+
+@fig-dress-f1-comp shows the preschoolers, both male and female, approaching the
+caregiver level (the black line) in [dress]{.smallcaps} F1.
+
+We now apply the plot function to each of the models.
+
+```{r}
+comp_plots <- expand_grid(
+  vowel = c("DRESS", "FLEECE", "KIT", "NURSE", "TRAP"),
+  formant_name = c("F1", "F2")
+)
+
+mod_predictions = list(
+  dress_f1_preds,
+  dress_f2_preds,
+  fleece_f1_preds,
+  fleece_f2_preds,
+  kit_f1_preds,
+  kit_f2_preds,
+  nurse_f1_preds,
+  nurse_f2_preds,
+  trap_f1_preds,
+  trap_f2_preds
+)
+
+comp_plots <- comp_plots |> 
+  mutate(
+    predictions = mod_predictions
+  )
+
+comp_plots <- comp_plots |>
+  mutate(
+    plot = pmap(
+      list(predictions, vowel, formant_name),
+      \(kids_preds, v, f) {
+        comp_plot(
+          kids_preds,
+          QB1_preds,
+          v, f
+        )
+      }
+    )
+  )
+```
+
+
+```{r}
+#| lightbox:
+#|   group: comp-plots
+#| cache: true
+#| layout-ncol: 2
+walk(
+  comp_plots$plot,
+  print
+)
+```
+
+We output a figure for the paper (Figure 5) here selecting [fleece]{.smallcaps}
+F1, [dress]{.smallcaps} F1, [kit]{.smallcaps} F1 and F2.
+
+```{r}
+#| label: fig-comb-plot
+#| fig.cap: |
+#|   FLEECE, DRESS, KIT F1 and KIT F2, plotted with 'caregiver' reference 
+#|   level (Figure 5 in paper).
+plot_1 <- comp_plots |> 
+  filter(
+    vowel == "FLEECE",
+    formant_name == "F1"
+  ) |> 
+  pull(plot) |> 
+  pluck(1) +
+  labs(subtitle = NULL)
+
+plot_2 <- comp_plots |> 
+  filter(
+    vowel == "DRESS",
+    formant_name == "F1"
+  ) |> 
+  pull(plot) |> 
+  pluck(1) +
+  labs(subtitle = NULL)
+
+plot_3 <- comp_plots |> 
+  filter(
+    vowel == "KIT",
+    formant_name == "F1"
+  ) |> 
+  pull(plot) |> 
+  pluck(1) +
+  labs(subtitle = NULL)
+
+plot_4 <- comp_plots |> 
+  filter(
+    vowel == "KIT",
+    formant_name == "F2"
+  ) |> 
+  pull(plot) |> 
+  pluck(1) + 
+  labs(subtitle = NULL)
+
+combined_plot <- (plot_1 + plot_2) /
+  (plot_3 + plot_4) +
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = "A")
+
+ggsave(
+  filename = here('plots', 'figure7_combined_smooths.tiff'),
+  plot = combined_plot,
+  width = 14,
+  height = 10,
+  dpi = 300
+)
+
+combined_plot
+```
+
+
+
+## Vowel space plots
+
+We now plot all the models in a vowel space diagram. For the paper, we restrict
+ourselves to the span from 50 to 60 months (i.e. 4;2 to 5). This is the main
+plot for the paper.
+
+``` {r}
+#| label: fig-vs-all-preschoolers
+#| fig-cap: |
+#|   Model predictions from age 4;2 to 5 with reference points from QuakeBox 
+#|   corpus. (Figure 4 in paper). 70% and 90% credible intervals are plotted.
+#| code-fold: true
+model_preds <- comp_plots |> 
+  select(vowel, formant_name, predictions) |> 
+  unnest(predictions)
+
+# We widen the dataframe to get a column for F1 and for F2.
+model_widepreds <- model_preds |> 
+  select(
+    vowel, gender, age_s, formant_name, Predicted, contains("CI")
+  ) %>% 
+  pivot_wider(
+    names_from = 'formant_name',
+    values_from = c('Predicted', contains("CI"))
+  ) |> 
+  mutate(
+    age = age_s * sd(kids$age) + mean(kids$age)
+  ) %>% 
+  filter(
+    between(age, 50, 60)
+  )
+
+ref_points <- QB1_preds %>% 
+  group_by(vowel, generation) %>% 
+  summarise(
+    Predicted_F1 = mean(Predicted_F1_lob2),
+    Predicted_F2 = mean(Predicted_F2_lob2)
+  ) %>% 
+  mutate(
+    generation = case_when(
+      generation == "Oldest" ~ "Oldest adults (F)",
+      generation == "Caregiver" ~ "Caregivers (F)",
+      .default = generation
+    )
+  ) %>% 
+  crossing(
+    gender = c("M", "F")
+  ) %>% 
+  bind_rows(
+    model_widepreds %>% 
+      group_by(vowel, gender) %>% 
+      filter(age == min(age)) %>% 
+      select(vowel, gender, Predicted_F1, Predicted_F2) %>% 
+      mutate(
+        generation = "Youngest Children (4;2)"
+      )
+  ) %>% 
+  filter(
+    generation != "Other",
+    vowel %in% short_front
+  ) %>% 
+  mutate(
+    vowel = factor(vowel, levels = short_front),
+    gender = if_else(gender == "F", "Female", "Male"),
+    gender = factor(gender, levels = c("Female", "Male"))
+  )
+
+ci_boxes <- model_widepreds %>% 
+  group_by(vowel) %>% 
+  filter(
+    age == min(age)
+  ) %>% 
+  mutate(
+    gender = if_else(gender == "F", "Female", "Male")
+  ) %>%
+  # There's probably a more compact way to do this, but this works.
+  pivot_longer(
+    cols = contains("CI", ignore.case = FALSE),
+    names_to = "int_type",
+    values_to = "int_value"
+  ) %>% 
+  mutate(
+    # Get values of form "CI_height_formant
+    which_side = str_replace_all(int_type, "_0.[79]", ""),
+    # Get size of credibile interval
+    which_size = str_extract(int_type, "0.[79]")
+  ) %>% 
+  select(-int_type) %>% 
+  pivot_wider(
+    names_from = which_side,
+    values_from = int_value
+  ) %>% 
+  group_by(vowel, gender, which_size) %>% 
+  nest() %>% 
+  mutate(
+    cis = map(
+      data,
+      ~ {
+        points <- .x %>% 
+          select(
+            CI_high_F2, CI_low_F2, 
+            CI_high_F1, CI_low_F1
+          ) %>% 
+          pivot_longer(
+            cols = everything(),
+            names_to = "type",
+            values_to = "value"
+          ) %>%
+          mutate(
+            formant = str_extract(type, "F[1-2]")
+          ) %>% 
+          select(formant, value)
+        out <- crossing(
+          "F1" = points %>% 
+            filter(formant == "F1") %>% 
+            pull(value), 
+          "F2" = points %>% 
+            filter(formant == "F2") %>% 
+            pull(value)
+        )
+        out %>% 
+          # order correctly for polygon.
+          slice(c(1, 2, 4, 3, 1))
+      }
+    )
+  ) %>% 
+  select(-data) %>% 
+  unnest(cis) %>% 
+  filter(
+    vowel %in% short_front
+  ) %>% 
+  mutate(
+    label = if_else(which_size == 0.7, "70% CI", "90% CI"),
+    vowel_group = str_c(vowel, label)
+  )
+
+kids_plot <- model_widepreds %>% 
+  group_by(vowel, gender) %>% 
+  mutate(
+    label = if_else(age == min(age), vowel, "")
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    vowel = factor(vowel, levels = short_front),
+    gender = if_else(gender == "F", "Female", "Male"),
+    gender = factor(gender, levels = c("Female", "Male"))
+  ) %>% 
+  ggplot(
+    aes(
+      x = Predicted_F2,
+      y = Predicted_F1,
+      colour = vowel
+    )
+  ) +
+  geom_path(
+    show.legend = FALSE,
+    arrow = arrow(
+        ends = "last", 
+        type="closed",
+        length = unit(2, "mm")
+      ),
+    linetype = 1,
+    linewidth = 0.7
+  ) +
+  geom_textpath(
+    aes(
+      x = F2,
+      y = F1,
+      colour = vowel,
+      label = label,
+      group = vowel_group
+    ),
+    linetype = "dashed",
+    vjust = 1,
+    size = 1.5,
+    inherit.aes = FALSE,
+    data = ci_boxes
+  ) +
+  geom_polygon(
+    aes(
+      x = F2,
+      y = F1,
+      fill = vowel,
+      group = vowel_group
+    ),
+    linewidth = 0,
+    alpha = 0.2,
+    inherit.aes = FALSE,
+    data = ci_boxes
+  ) +
+  geom_label_repel(
+    aes(label = label),
+    size = 2, 
+    max.overlaps = 50,
+    label.padding = 0.1,
+    fontface = "bold",
+    alpha = 0.8,
+    #nudge_x = 0.2,
+    #nudge_y = 0.1,
+    min.segment.length = 0
+    ) +
+  geom_point(aes(shape = generation), size = 3, data = ref_points) +
+  scale_x_reverse(expand = expansion(mult = 0.1)) +
+  scale_y_reverse() +
+  scale_colour_manual(values = vowel_colours_5) +
+  scale_fill_manual(values = vowel_colours_5) +
+  coord_fixed() +
+  scale_shape_manual(
+    values = list(
+      "Caregivers (F)" = 18,
+      "Youngest Children (4;2)" = 20,
+      "Oldest adults (F)" = 4
+    )
+  ) + 
+  labs(
+    y = "F1 (normalised)",
+    x = "F2 (normalised)",
+    colour = "Vowel",
+    shape = "Population"
+  ) +
+  guides(
+    color = "none",
+    fill = "none"
+  ) +
+  facet_grid(cols = vars(gender)) +
+  theme(
+    legend.position = "bottom"
+  )
+
+ggsave(
+  here('plots', 'figure5_model_preds.tiff'),
+  plot = kids_plot,
+  width = 8,
+  height = 5,
+  dpi = 500
+) 
+
+kids_plot
+```
+
+We now add the story teller and some vowel space triangles.
+
+```{r}
+#| label: fig-storyteller
+#| fig.cap: |
+#|   Vowel space with story teller mean productions for each vowel and vowel
+#|   space triangles added for the storyteller, putative caregivers, and 
+#|   the youngest preschoolers in the plot (4;2). This is Figure 9 in the paper.
+storyteller_means <- read_rds(here('data', 'storyteller_means.rds'))
+
+storyteller_means <- storyteller_means |> 
+  rename(
+    vowel = celex_vowel,
+    Predicted_F1 = F1_lob2,
+    Predicted_F2 = F2_lob2
+  ) |> 
+  mutate(
+    generation = "Storyteller (M)"
+  ) |> 
+  filter(
+    vowel %in% short_front
+  ) %>% 
+  crossing(
+    gender = c("Male", "Female")
+  )
+
+ref_points <- ref_points %>% 
+  bind_rows(storyteller_means)
+
+group_paths <- ref_points %>% 
+  filter(
+    gender == "Female",
+    vowel %in% c("NURSE", "FLEECE", "TRAP"),
+    generation != "Oldest adults (F)"
+  ) %>% 
+  arrange(vowel)
+
+out_plot <- model_widepreds %>% 
+  filter(
+    gender == "F"
+  ) %>% 
+  mutate(
+    vowel = factor(vowel, levels = short_front)
+  ) %>% 
+  ggplot(
+    aes(
+      x = Predicted_F2,
+      y = Predicted_F1,
+      colour = vowel
+    )
+  ) +
+  geom_path(
+    show.legend = FALSE,
+    arrow = arrow(
+        ends = "last", 
+        type="closed",
+        length = unit(2, "mm")
+      ),
+    linetype = 1,
+    linewidth = 0.7
+  ) +
+  geom_point(aes(shape = generation), data = ref_points, size = 4) +
+  geom_polygon(
+    aes(
+      linetype = generation
+    ),
+    linewidth = 1,
+    colour = "black",
+    fill = "NA",
+    data = group_paths
+  ) +
+  scale_x_reverse(expand = expansion(mult = 0.1), position = "top") +
+  scale_y_reverse(position = "right") +
+  scale_colour_manual(values = vowel_colours_5) +
+  scale_shape_manual(
+    values = list(
+      "Caregivers (F)" = 18,
+      "Youngest Children (4;2)" = 20,
+      "Oldest adults (F)" = 4,
+      "Storyteller (M)" = 7
+    )
+  ) +
+  coord_fixed() +
+  labs(
+    y = "F1 (normalised)",
+    x = "F2 (normalised)",
+    colour = "Vowel",
+    shape = "Population (Points)",
+    linetype = "Population (Triangle)"
+  ) +
+  guides(
+    color = guide_legend(
+      override.aes = list(fill=NA),
+      order = 3
+    ),
+    shape = guide_legend(order = 4)
+  )
+
+ggsave(
+  here('plots', 'figure9_storyteller.tiff'),
+  plot = out_plot,
+  width = 7,
+  height = 5,
+  dpi = 500
+)
+
+out_plot
+```
+
+# Additional tests
+
+## Longitudinal models
+
+Each model, applied to the preschoolers, has already been compared with the data
+viewed longitudinally, with mixed results (e.g. @fig-dress-long-test).
+
+But let's try a modelling approach which foregrounds the longitudinal nature of
+the data. This one will use 'collect' as the 
+primary explanatory variable rather than age. This provides another way to 
+approach the data longitudinally, which we can compare with the results 
+presented above.
+
+We'll just do this for the four variables highlighted in @fig-comb-plot.
+
+### [dress]{.smallcaps} F1
+
+```{r}
+# Create dataframe for F1 models
+f1 <- kids |>
+  filter(!F1_outlier) |> 
+  select(
+    participant, collect, age_s, gender, word, vowel, stressed, stopword, 
+    F1_lob2, duration_s, age
+  ) |> 
+  mutate(
+    gender = as.factor(gender),
+    word = as.factor(word)
+  )
+
+dress_f1_data <- f1 |> 
+  filter(
+    vowel == "DRESS"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+```
+
+Let's have a look at the data first.
+
+```{r}
+#| label: fig-collect-dress
+#| fig.cap: |
+#|   Mean DRESS F1 formant values across four collection points for preschoolers
+#|   with at least two collection points.
+collect_plot <- function(vowel_data, formant="F1") {
+  vowel_data %>% 
+    group_by(participant) %>% 
+    mutate(
+      n_collects = n_distinct(collect)
+    ) %>% 
+    filter(
+      n_collects > 2
+    ) %>% 
+    group_by(participant, collect) %>% 
+    summarise(
+      formant = mean(.data[[paste0(formant, "_lob2")]]),
+      gender = first(gender)
+    ) %>% 
+    ggplot(
+      aes(
+        y = formant,
+        x = collect,
+        colour = gender,
+        group = participant
+      )
+    ) +
+    geom_point() + 
+    geom_path() +
+    scale_y_reverse()
+}
+
+collect_plot(dress_f1_data)
+```
+
+@fig-collect-dress suggests a wide range of values at collection point two, 
+tightening at three, and then raising (in the vowel space) at point four.
+
+```{r}
+summary(dress_f1_data)
+```
+
+
+Let's model it. We replace year of birth with collection point in the model 
+structure from last time, with random intercepts for each participant and 
+collect, which should in theory help to control for chronological age.
+
+```{r}
+#| eval: false
+dress_f1_fit <- brm(
+    F1_lob2 ~ stopword + factor(collect) * gender +
+      duration_s +
+      (1 | w_s) +
+      (1 | p_c),
+    data = dress_f1_data,
+    family = student(),
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.9),
+  )
+
+write_rds(dress_f1_fit, here('models', 'dress_F1_long.rds'))
+```
+
+``` {r}
+#| include: false
+dress_f1_fit <- read_rds(here('models', 'dress_F1_long.rds'))
+```
+
+We estimate the change over time at the collect level.
+
+```{r}
+#| label: fig-dress-f1-collect-preds
+#| fig.cap: | 
+#|   Model predictions for DRESS F1 at four collects for participants with at
+#|   least two collection points. 90% credible intervals plotted.
+estimate_relation(
+  dress_f1_fit,
+  by = c("collect", "gender"),
+  allow_new_levels = TRUE,
+  ci = 0.90,
+) %>% 
+  plot() +
+  scale_y_reverse()
+```
+
+@fig-dress-f1-collect-preds suggests rising in the vowel space for female
+preschoolers between collection points three and four, but nothing much
+else. This is more-or-less consistent with our age based model for the female
+preschoolers. The across-the-board rising in the vowel space we see for males
+is not borne out. But there are only four male preschoolers here, so this should
+not worry us massively.
+
+### [fleece]{.smallcaps} F1
+
+Let's look at [fleece] F1.
+
+```{r}
+#| label: fig-collect-fleece
+#| fig.cap: |
+#|   Mean FLEECE F1 formant values across four collection points for preschoolers
+#|   with at least two collection points
+fleece_f1_data <- f1 |> 
+  filter(
+    vowel == "FLEECE"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+
+collect_plot(fleece_f1_data)
+```
+
+@fig-collect-fleece is a similar story to @fig-collect-dress. Some kind of
+stability between two and three and an increase at four. Note also that the
+three of the males start very low in the vowel space at time two then 
+increase at time three.
+
+```{r}
+summary(fleece_f1_data)
+```
+
+Let's model.
+
+```{r}
+#| eval: false
+fleece_f1_fit <- brm(
+    F1_lob2 ~ stopword + factor(collect) * gender +
+      duration_s +
+      (1 | w_s) +
+      (1 | p_c),
+    data = fleece_f1_data,
+    family = student(),
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.9),
+  )
+
+
+write_rds(fleece_f1_fit, here('models', 'fleece_F1_long.rds'))
+```
+
+```{r}
+#| include: false
+fleece_f1_fit <- read_rds(here('models', 'fleece_F1_long.rds'))
+```
+
+```{r}
+#| label: fig-fleece-f1-collect-preds
+#| fig.cap: | 
+#|   Model predictions for FLEECE F1 at four collects for participants with at
+#|   least two collection points. 90% credible intervals plotted.
+
+estimate_relation(
+  fleece_f1_fit,
+  by = c("collect", "gender"),
+  allow_new_levels = TRUE,
+  ci = 0.9
+) %>% 
+  plot() +
+  scale_y_reverse()
+```
+
+The apparent raising in the vowel space occurs where expected for both genders.
+However, with out 90% credible intervals, there's no obvious place where we 
+the mean value at one collect is outside the 90% credible interval for the
+next collection point. Nonetheless, the pattern of raising towards the end
+is at least consistent with out age-based models.
+
+### [kit]{.smallcaps} F1
+
+Time for [kit]{.smallcaps}.
+
+```{r}
+#| label: fig-collect-kit
+#| fig.cap: |
+#|   Mean KIT F1 formant values across four collection points for preschoolers
+#|   with at least two collection points
+fleece_f1_data <- f1 |> 
+  filter(
+    vowel == "KIT"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+
+collect_plot(kit_f1_data)
+```
+_Maybe_ [kit]{.smallcaps} F1 is showing a lowering in the vowel space for the
+female preschoolers. There's nothing obvious happening for the
+male preschoolers.
+
+```{r}
+summary(kit_f1_data)
+```
+
+
+Let's model.
+
+```{r}
+#| eval: false
+kit_f1_fit <- brm(
+    F1_lob2 ~ stopword + factor(collect) * gender +
+      duration_s +
+      (1 | w_s) +
+      (1 | p_c),
+    data = kit_f1_data,
+    family = student(),
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.9),
+  )
+
+
+write_rds(kit_f1_fit, here('models', 'kit_F1_long.rds'))
+```
+
+```{r}
+#| include: false
+kit_f1_fit <- read_rds(here('models', 'kit_F1_long.rds'))
+```
+
+```{r}
+#| label: fig-kit-f1-collect-preds
+#| fig.cap: | 
+#|   Model predictions for KIT F1 at four collects for participants with at
+#|   least two collection points. 90% credible intervals plotted.
+
+estimate_relation(
+  kit_f1_fit,
+  by = c("collect", "gender"),
+  allow_new_levels = TRUE,
+  ci = 0.9
+) %>% 
+  plot() +
+  scale_y_reverse()
+```
+
+The broad pattern in @fig-kit-f1-collect-preds is a small lowering in the 
+vowel space for female preschoolers and no clear pattern in the males. This is
+broadly consistent with the patterns identified in the age-based models.
+
+### [kit]{.smallcaps} F2
+
+```{r}
+#| label: fig-collect-kit-f2
+#| fig.cap: |
+#|   Mean KIT F2 formant values across four collection points for preschoolers
+#|   with at least two collection points
+f2 <- kids |>
+  filter(!F2_outlier) |> 
+  select(
+    participant, collect, age_s, gender, word, vowel, stressed, stopword, 
+    F2_lob2, duration_s, age
+  ) |> 
+  mutate(
+    gender = as.factor(gender),
+    word = as.factor(word)
+  )
+
+kit_f2_data <- f2 |> 
+  filter(
+    vowel == "KIT"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()
+
+collect_plot(kit_f2_data, formant = "F2")
+```
+
+@fig-collect-kit-f2 suggests backing for male preschoolers, and some kind of 
+tighter clustering for female preschoolers by the time they hit collection
+point four.
+
+```{r}
+summary(kit_f2_data)
+```
+
+
+We'll model this.
+
+```{r}
+#| eval: false
+kit_f2_fit <- brm(
+    F2_lob2 ~ stopword + factor(collect) * gender +
+      duration_s +
+      (1 | w_s) +
+      (1 | p_c),
+    data = kit_f2_data,
+    family = student(),
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.9),
+  )
+
+
+write_rds(kit_f2_fit, here('models', 'kit_F2_long.rds'))
+```
+
+```{r}
+#| include: false
+kit_f2_fit <- read_rds(here('models', 'kit_F2_long.rds'))
+```
+
+
+```{r}
+#| label: fig-kit-f2-collect-preds
+#| fig.cap: | 
+#|   Model predictions for KIT F2 at four collects for participants with at
+#|   least two collection points. 90% credible intervals plotted.
+
+estimate_relation(
+  kit_f2_fit,
+  by = c("collect", "gender"),
+  allow_new_levels = TRUE,
+  ci = 0.9
+) %>% 
+  plot() +
+  scale_y_reverse()
+```
+
+Interestingly, @fig-kit-f2-collect-preds does not seem to match the backing
+story we had for male speakers. In both cases, there's nothing obvious going
+on. 
+
+## Non-imputed analysis
+
+We now model with the non-imputed version of Lobanov 2.0. The point of this is
+to get some indication that the imputation of values carried out as part of
+our normalisation process did not bias our results.
+
+Note that [nurse]{.smallcaps} is not in the top-5 vowel types, so cannot be
+modelled here.
+
+Again, we're just looking for broad agreement with our existing models which
+include the imputed data.
+
+```{r}
+f1 <- kids |>
+  filter(!F1_outlier) |> 
+  select(
+    participant, collect, age_s, gender, word, vowel, stressed, stopword, 
+    F1_sub, age, duration_s
+  ) |> 
+  mutate(
+    gender = as.factor(gender),
+    word = as.factor(word)
+  )
+
+f2 <- kids |>
+  filter(!F2_outlier) |> 
+  select(
+    participant, collect, age_s, gender, word, vowel, stressed, stopword, 
+    F2_sub, age, duration_s
+  ) |> 
+  mutate(
+    gender = as.factor(gender),
+    word = as.factor(word)
+  )
+```
+
+### [dress]{.smallcaps} F1
+
+```{r}
+dress_f1_data <- f1 |> 
+  filter(
+    vowel == "DRESS"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels() %>% 
+  filter(
+    !is.na(F1_sub)
+  )
+
+```
+
+```{r}
+summary(dress_f1_data)
+```
+
+
+``` {r}
+#| eval: false
+dress_f1_fit_sub <- brm(
+    F1_sub ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = dress_f1_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.95),
+  )
+
+write_rds(
+  dress_f1_fit_sub, 
+  here('models', 'dress_f1_fit_sub.rds'), 
+  compress = "gz"
+)
+```
+
+```{r}
+#| include: false
+dress_f1_fit_sub <- read_rds(
+  here('models', 'dress_f1_fit_sub.rds')
+)
+```
+
+Let's look at some model predictions.
+
+```{r}
+#| label: fig-dress-sub-f1
+#| fig.cap: |
+#|   DRESS F1 by age estimated without imputation. Both show gradual increases,
+#|   but with very wide 90% credible intervals.
+dress_f1_preds <- estimate_relation(
+    dress_f1_fit_sub, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = 0.9
+  )
+  
+dress_f1_preds %>% 
+  plot() +
+  scale_y_reverse()
+```
+We get a broadly similar pattern to our models with imputed data
+(@fig-dress-mod-plots). The vowel is going up in the vowel space. We cannot
+directly compare the normalised formant values with those of the community or
+the imputed preschooler values as they are normalised with a different vowel
+set.
+
+### [fleece]{.smallcaps} F1
+
+```{r}
+fleece_f1_data <- f1 |> 
+  filter(
+    vowel == "FLEECE"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels()|> 
+  filter(
+    !is.na(F1_sub)
+  )
+```
+
+```{r}
+summary(fleece_f1_data)
+```
+
+
+``` {r}
+#| eval: false 
+fleece_f1_fit_sub <- brm(
+  F1_sub ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = fleece_f1_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.95),
+  )
+
+write_rds(
+  fleece_f1_fit_sub, 
+  here('models', 'fleece_f1_fit_sub.rds'), 
+  compress = "gz"
+)
+```
+
+```{r}
+#| include: false
+fleece_f1_fit_sub <- read_rds(
+  here('models', 'fleece_f1_fit_sub.rds')
+)
+```
+
+Let's look at some model predictions.
+
+```{r}
+#| label: fig-fleece-sub-f1
+#| fig.cap: |
+#|   FLEECE F1 by age estimated without imputation. Both show gradual increases,
+#|   but with very wide 90% credible intervals.
+fleece_f1_preds <- estimate_relation(
+    fleece_f1_fit_sub, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = 0.9
+  )
+  
+fleece_f1_preds %>% 
+  plot() +
+  scale_y_reverse()
+```
+@fig-fleece-sub-f1 is much more alarming for our overall story, and is
+referenced in the paper. If anything, the vowel lowers in the vowel space for
+both male and female preschoolers, although not by much and with very wide 90%
+credible intervals. There are a few factors which could explain the discrepancy.
+We have not carried out a detailed study of normalisation with only five vowels,
+for instance. On the other hand, our imputation method should not bias us in the
+direction of _move_ movement with age. We leave this here as warning against
+over interpreting the apparent extreme movements in [fleece]{.smallcaps} in the
+models reported above.
+
+### [kit]{.smallcaps} F1
+
+We copy the above steps for [kit]{.smallcaps}
+
+```{r}
+kit_f1_data <- f1 |> 
+  filter(
+    vowel == "KIT"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels() |> 
+  filter(
+    !is.na(F1_sub)
+  )
+```
+
+```{r}
+summary(kit_f1_data)
+```
+
+
+``` {r}
+#| eval: false
+kit_f1_fit_sub <- brm(
+    F1_sub ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = kit_f1_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.99),
+  )
+
+write_rds(
+  kit_f1_fit_sub, 
+  here('models', 'kit_f1_fit_sub.rds'), 
+  compress = "gz"
+)
+```
+
+
+```{r}
+#| include: false
+kit_f1_fit_sub <- read_rds(
+  here('models', 'kit_f1_fit_sub.rds')
+)
+```
+
+
+```{r}
+#| label: fig-kit-sub-f1
+#| fig.cap: |
+#|   KIT F1 by age estimated without imputation. Both show gradual increases,
+#|   but with very wide 90% credible intervals.
+kit_f1_preds <- estimate_relation(
+    kit_f1_fit_sub, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = 0.9
+  )
+  
+kit_f1_preds %>% 
+  plot() +
+  scale_y_reverse()
+```
+
+@fig-kit-sub-f1 is interestingly different from @fig-kit-modplot-f1. We see a
+lower in the vowel space for both female and male preschoolers. 
+Both have means estimated to be outside of the 90% credible interval for the
+youngest speakers. If anything, this movement in the male preschoolers would
+make our story easier to tell. 
+
+
+### [kit]{.smallcaps} F2
+
+We copy the above steps for [kit]{.smallcaps} F2.
+
+```{r}
+kit_f2_data <- f2 |> 
+  filter(
+    vowel == "KIT"
+  ) |> 
+  mutate(
+    w_s = interaction(word, stressed),
+    p_c = interaction(participant, collect)
+  ) %>% 
+  droplevels() |> 
+  filter(
+    !is.na(F2_sub)
+  )
+```
+
+```{r}
+summary(kit_f2_data)
+```
+
+
+``` {r}
+#| eval: false
+kit_f2_fit_sub <- brm(
+    F2_sub ~ gender + stopword + 
+      s(age_s, by=gender, k = 5) +
+      s(duration_s, k = 5) +
+      (1 | w_s) +
+      (1 | p_c),
+    data = kit_f2_data,
+    family = student(),
+    prior = prior_t,
+    chains = 4,
+    cores = 4,
+    iter = 3000,
+    control = list(adapt_delta = 0.99),
+  )
+
+write_rds(
+  kit_f2_fit_sub, 
+  here('models', 'kit_f2_fit_sub.rds'), 
+  compress = "gz"
+)
+```
+
+
+```{r}
+#| include: false
+kit_f2_fit_sub <- read_rds(
+  here('models', 'kit_f2_fit_sub.rds')
+)
+```
+
+
+```{r}
+#| label: fig-kit-sub-f2
+#| fig.cap: |
+#|   KIT F2 by age estimated without imputation. Both show gradual increases,
+#|   but with very wide 90% credible intervals.
+kit_f2_preds <- estimate_relation(
+    kit_f2_fit_sub, 
+    by = list(
+      age_s = seq(min_age_s, max_age_s, length = 50), 
+      gender = c("F", "M"), 
+      duration_s = 0
+    ),
+    predict="link",
+    ci = 0.9
+  )
+  
+kit_f2_preds %>% 
+  plot() +
+  scale_y_reverse()
+```
+
+@fig-kit-sub-f2 shows now clear evidence of any kind of movement in the vowel
+space (whereas we expect some backing in the male preschoolers). The credible
+intervals appear wide, but this is mostly a feature of the scale of the 
+visualization.
+
+# References {-}
+
+```{r}
+#| echo: false
+grateful::nocite_references(
+  grateful::cite_packages(
+    output = "citekeys", 
+    out.dir = here(), 
+    errors="ignored"
+  )
+)
+```
+
+::: refs
+
+:::
+

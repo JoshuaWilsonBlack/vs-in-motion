@@ -1,0 +1,35 @@
+# _brand.yml seems to designed for projects and websites.
+# I'm currently playing with it.
+# Logos do not affect standalone html documents.
+color:
+    foreground: "#3E3C3D"
+    background: "#F5F5F5"
+    primary: "#585C1F"
+    secondary: "#9fa638"
+    tertiary: "#ced37e"
+    success: "#98c0c5"
+    info: "#f0deb4"
+    warning: "#f7906d"
+    danger: "#ba5c3d"
+    light: "#fff"
+    dark: "#191818"
+  
+logo: 
+  images:
+    icon: images/NZILBB-small.svg
+    full: images/nzilbb-uc.svg
+  small: icon
+  medium: icon
+  large: full
+
+typography:
+  fonts:
+    - family: Open Sans
+      source: bunny
+    - family: Merriweather Sans
+      source: bunny
+    - family: Fira Code
+      source: bunny
+  base: Open Sans
+  headings: Merriweather Sans
+  monospace: Fira Code

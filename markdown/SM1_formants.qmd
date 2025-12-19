@@ -1,0 +1,4005 @@
+---
+title: "SM1: Formant tracking, preprocessing, and normalisation"
+subtitle: 'Supplementary material for "Acquiring a vowel system in motion."'
+author:
+    - name:
+        given: Joshua
+        family: Wilson Black
+      orcid: 0000-0002-8272-5763
+      email: joshua.black@canterbury.ac.nz
+      affiliations:
+      - name: New Zealand Institute for Language, Brain and Behaviour, University of Canterbury
+        city: Christchurch
+        country: New Zealand
+    - name: Lynn Clark
+      orcid: 0000-0003-3282-6555
+      email: lynn.clark@canterbury.ac.nz
+      affiliations:
+        - name: Department of Linguistics, University of Canterbury
+          city: Christchurch
+          country: New Zealand
+        - name: New Zealand Institute for Language, Brain and Behaviour, University of Canterbury
+          city: Christchurch
+          country: New Zealand
+    - name: Gia Hurring
+      orcid: 0000-0003-1575-6073
+      email: gia.hurring@canterbury.ac.nz
+      affiliations:
+        - name: New Zealand Institute for Language, Brain and Behaviour, University of Canterbury
+          city: Christchurch
+          country: New Zealand
+funding: "Marsden Fund Grant from the Royal Society of New Zealand (20-UOC-064)"
+date: today
+lightbox:
+  match: auto
+format: 
+  html:
+    theme:
+      - simplex
+      - brand
+    css: theme.css
+    toc: true
+    toc-depth: 4
+    toc-expand: true
+    toc-location: right
+    code-summary: "To view code click here"
+    anchor-sections: true
+    number-sections: true
+    cap-location: margin
+    title-block-banner: "#e8e4e4"
+    title-block-banner-color: "#3E3C3D"
+    banner-img: 'images/nzilbb-uc-marsden.svg'
+    fig-responsive: true
+    lang: 'en-GB'
+    execute:
+      warning: false
+    embed-resources: false
+    include-in-header:
+      - text: |
+         <link rel = "shortcut icon" href = "images/fav.png" />
+    include-after-body:
+      - text: |
+          <div class ="bottom-logo">
+            <img src = "images/NZILBB-small.svg" width="5%">
+          </div>
+    template-partials:
+      - title-block.html
+bibliography: 
+  - "https://api.citedrive.com/bib/1e7eade6-e5e0-4cea-96b3-27a813f7bd4a/references.bib?x=eyJpZCI6ICIxZTdlYWRlNi1lNWUwLTRjZWEtOTZiMy0yN2E4MTNmN2JkNGEiLCAidXNlciI6ICI0NzAyIiwgInNpZ25hdHVyZSI6ICJkOWIxODViNzJiOWNmNDQ1ZWVjMGU4NzNhMzM4ODg2NWUyYTQ3MzgzMDQ3ZjIxZWIwZDUxNTBkYThkMzE1M2VkIn0=/bibliography.bib"
+  - ../grateful-refs.bib
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+# Overview
+
+This document sets out the R code used to extract all monophthongs,
+track formants using the FastTrack plugin for Praat, filter, and normalise.
+
+Formant tracking was carried out using FastTrack in Praat. Instructions to
+reproduce our formant extraction method are provided below and a validation of
+the FastTrack settings we used is provided in @sec-validation.
+
+Note that we extract all monophthongs from the corpus in this document, while we
+only analyse the 'extended short front vowel shift' in the associated paper. 
+The full complement of monophthongs is necessary for normalisation.
+
+There are a few side-lines in these supplementary materials. For the purposes
+of the paper, the key features are:
+
+- @sec-apply: The code which actually carried out our formant tracking.
+- @sec-filter: Data filtering steps.
+- @sec-lob2: The normalisation method we use.
+
+
+# Packages and `renv` environment
+
+We load a series of R packages.
+
+```{r}
+# Tidyverse and related packages
+library(tidyverse)
+library(glue)
+library(lubridate)
+library(ggrepel)
+
+# improved tables
+library(kableExtra)
+
+# File path management
+library(here)
+
+# nzilbb.labbcat allows access to our LaBB-CAT instance.
+library(nzilbb.labbcat)
+
+# nzilbb.vowels provides a series of functions to help with processing vowel
+# data.
+library(nzilbb.vowels)
+
+# To construct a diagram of the filtering process.
+library(DiagrammeR)
+
+# To plot correlations
+library(ggcorrplot)
+
+# To load images from file
+library(imager)
+
+# We use fasttrackr as part of our workflow for using FastTrack with Praat.
+# (Rather than directly using fasttrackr to replace the Praat integration).
+library(fasttrackr)
+
+# We use rPraat is used to load midpoint readings.
+library(rPraat)
+
+labbcat.url <- 'https://labbcat.canterbury.ac.nz/kids/'
+
+# Set ggplot theme
+theme_set(theme_bw())
+
+# Set colours for vowel plots
+# These are derived from Tol's rainbow palette, designed
+# to be maximally readable for various forms of colour 
+# blindness (https://personal.sron.nl/~pault/).
+vowel_colours <- c(
+  DRESS = "#777777",
+  FLEECE = "#882E72",
+  GOOSE = "#4EB265",
+  KIT = "#7BAFDE",
+  LOT = "#DC050C",
+  TRAP = "#F7F056",
+  START = "#1965B0",
+  STRUT = "#F4A736",
+  THOUGHT = "#72190E",
+  NURSE = "#E8601C",
+  FOOT = "#5289C7"
+)
+
+# It is sometimes useful for filtering to have a list of all monophthongs.
+monophthongs <- c(
+  "DRESS", "FLEECE", "GOOSE", "KIT", "LOT", "TRAP", "START", "STRUT",
+  "THOUGHT", "NURSE", "FOOT", "SCHWA"
+)
+
+# Set a seed for the random sampling below
+set.seed(10)
+```
+
+We use `renv` to store and restore the specific versions of packages we
+use. For more information see
+<https://rstudio.github.io/renv/articles/renv.html>. Install `renv` if you 
+do not have the package. We use R version 4.4.2.
+
+# LaBB-CAT extraction
+
+Transcripts and audio of story retell tasks were uploaded to a LaBB-CAT instance
+[@fromont-hay-2012-labb]. We extract all monophthong tokens from our LaBB-CAT
+instance using the `nzilbb.labbcat` package. The code in the block below will
+only run successfully if you have access to the LaBB-CAT instance (which you 
+likely do not!). It is provided for documentation purposes.
+
+It is worth noting here that there is a two-stage process where the `segment`
+layer is generated by MFA using an American English phonemic dictionary. From
+this we generate a `celexSegment` layer which contains the most likely 
+pronunciation from the CELEX dictionary.
+
+```{r}
+#| eval: false
+#| code-fold: true
+
+# Define the search pattern
+pattern <- list(
+  columns = list(
+    list(
+      layers = list(
+        # We want all vowels in the segment layer. The pattern is a
+        # regular expression, using the DISC alphabet.
+        # We will later filter to include only the monophthongs from the 
+        # celexSegment layer.
+        segment = list(pattern = "[I@EVQU{i#3\\$u123456789]")
+      )
+    )  
+  )
+)
+
+# Collect matching tokens.
+# anchor.confidence.min gives us all automatically aligned tokens.
+# We only take tokens from transcripts which have been manually corrected.
+matches <- getMatches(
+  labbcat.url,
+  pattern = pattern,
+  page.length = 1000,
+  anchor.confidence.min = 50,
+  # only extract transcripts which have been manually corrected.
+  transcript.expression = expressionFromAttributeValue(
+    'transcript_phonemic_corrections', 1
+  )
+)
+# Tokens: 19446
+
+# Collect relevant information at the transcript level. This includes the 
+# age of the child when the transcript was recorded, where it was recorded, 
+# etc.
+transcript_attributes <- getTranscriptAttributes(
+  labbcat.url,
+  unique(matches$Transcript),
+  c(
+    'transcript_cp', 'transcript_age', 'transcript_centre',
+    'transcript_recording_date'
+  )
+)
+
+# Merge transcript-level information with matches by left join.
+matches <- matches %>%
+  rename(
+    transcript = Transcript,
+    participant = Participant
+  ) %>%
+  left_join(transcript_attributes)
+
+# Collect relevant information at participant level.
+participant_attributes <- getParticipantAttributes(
+  labbcat.url,
+  unique(matches$participant),
+  c(
+    'participant_date_of_birth', 'participant_gender', 
+    'participant_ethnicity', 'participant_home_language'
+  )
+)
+
+# Merge participant-level information with matches by left join.
+matches <- matches %>% 
+    left_join(participant_attributes)
+
+# Collect match labels (additional information at the token level)
+match_labels <- getMatchLabels(
+  labbcat.url,
+  match.ids = matches$MatchId,
+  layer.ids = c(
+    "celexSegment", "noise",
+    "syllable", "orthography",
+    "celex_frequency", 'corpus_frequency'
+  )
+)
+
+# Collect the segment following each token.
+following_seg <- getMatchLabels(
+  labbcat.url, 
+  matches$MatchId, 
+  layer.ids = c("segment"),
+  target.offset=1
+)
+
+matches <- bind_cols(matches, match_labels, following_seg)
+
+# Use Praat integration to collect pitch information
+pitches <- processWithPraat(
+  labbcat.url,
+  matches$MatchId, matches$Target.segment.start, matches$Target.segment.end,
+  window.offset = 0.025,
+  praatScriptPitch(
+    get.mean = TRUE,
+    get.minimum = TRUE,
+    get.maximum = TRUE,
+    time.step = 0,
+    pitch.floor = 150,
+    max.number.of.candidates = 15,
+    very.accurate = FALSE,
+    silence.threshold = 0.03,
+    voicing.threshold = 0.5,
+    octave.cost = 0.01,
+    octave.jump.cost = 0.35,
+    voiced.unvoiced.cost = 0.35,
+    pitch.ceiling = 1250, # On the high side, some children can reach almost 2000 Hz when yelling
+    # https://www.fon.hum.uva.nl/praat/manual/Intro_4_2__Configuring_the_pitch_contour.html
+    pitch.floor.male = NULL,
+    voicing.threshold.male = 0.4,
+    pitch.ceiling.male = NULL,
+    gender.attribute = "participant_gender",
+    value.for.male = "M",
+    sample.points = NULL,
+    interpolation = "linear",
+    skip.errors = TRUE
+  )
+)
+
+matches <- bind_cols(matches, pitches) %>% select(-Error)
+
+# Tidy names, generate useful columns, remove unnecessary columns.
+matches <- matches %>% 
+  rename(
+    start = Target.segment.start,
+    end = Target.segment.end,
+    word_start = Target.word.start,
+    word_end = Target.word.end,
+    age = transcript_age,
+    dob = participant_date_of_birth,
+    gender = participant_gender,
+    collect = transcript_cp,
+    ethnicity = participant_ethnicity,
+    home_language = participant_home_language,
+    text = Text,
+    word = orthography,
+    following_segment = Token.plus.1.segment
+  ) %>% 
+  mutate(
+    # the mfa_vowel variable uses the segment layer and represents the best
+    # guess of the mfa model given it's available pronunciations.
+    mfa_vowel = fct_recode(
+      factor(Target.segment),
+      FLEECE = "i",
+      KIT = "I",
+      DRESS = "E",
+      TRAP = "{",
+      START = "#",
+      LOT = "Q",
+      THOUGHT = "$",
+      NURSE = "3",
+      STRUT = "V",
+      FOOT = "U",
+      GOOSE = "u",
+      SCHWA = "@"
+    ),
+    # Remove consonants added when converting from mfa segments to celex
+    # phobemes. This code uses the fact that '[^X]' matches all characters
+    # _except_ x.
+    vowel = str_replace(
+      celexSegment,
+      "[^iIE{#\\$3QVUu@123456789]",
+      ""
+    ),
+    # The vowel variable will have some DISC coded diphthongs in it. e.g.
+    # '8' (= SQUARE)
+    vowel = fct_recode(
+      factor(vowel),
+      FLEECE = "i",
+      KIT = "I",
+      DRESS = "E",
+      TRAP = "{",
+      START = "#",
+      LOT = "Q",
+      THOUGHT = "$",
+      NURSE = "3",
+      STRUT = "V",
+      FOOT = "U",
+      GOOSE = "u",
+      SCHWA = "@"
+    ),
+    stress = case_when(
+      str_detect(syllable, '".*') ~ '"',
+      str_detect(syllable, "'.*") ~ "'",
+      .default = "0"
+    )
+  ) %>% 
+  select(
+    -Target.segment, -Corpus, -Line, -LineEnd,
+    -Before.Match, -After.Match, -Number, -Target.word, -SearchName
+  )
+
+# Filter non-monophthongs (in celex_vowel layer)
+matches <- matches %>% 
+  filter(
+    vowel %in% monophthongs
+  ) %>% 
+  mutate(
+    vowel = factor(vowel, levels = monophthongs)
+  )
+# tokens: 16045
+
+# Correct ethnicity error in participant.
+matches <- matches %>% 
+  mutate(
+    ethnicity = if_else(ethnicity == "MÄori", "Māori", ethnicity)
+  )
+
+# Save data
+write_rds(matches, here('data', 'untracked_vowels.rds'))
+```
+
+We now load the data extracted from LaBB-CAT in the above block.
+
+```{r}
+vowels <- read_rds(here('data', 'untracked_vowels.rds'))
+```
+
+There are `r nrow(vowels)` tokens. The column names are:
+
+```{r}
+names(vowels)
+```
+
+The important columns to note are:
+
+-   `participant` contains a unique participant identified.
+-   `MatchId` and `URL` connect the each segment with the LaBB-CAT
+    corpus.
+-   `mfa_vowel` indicates the vowel detected by MFA which the segment comes 
+from stored as a Wells lexical set.
+-   `vowel` indicates the best CELEX phoneme to match the segments found by MFA.
+-   `start` and `end` give the onset and offset of the segment (seconds).
+-   `minPitch`, `maxPitch` and `meanPitch` give pitch information for
+    the segment extracted via Praat.
+-   `following_segment` gives the CELEX DISC code for the following
+    segment.
+-   `syllable` and `stress` tell us what syllable the segment comes from
+    and whether it is stressed.
+-   `text` and `word` give the word in which the segment appears with
+    punctuation and without, respectively.
+-   `corpus_frequency` and `celex_frequency` give frequency from the
+    corpus and from CELEX, respectively.
+-   `word_start` and `word_end` give the onset and offset of the word
+    which contains the segment (seconds).
+-   `dob`, `gender`, `ethnicity`, and `home_language` provide metadata
+    about the child.
+-   `collect` indicates the collection point at which the segment was
+    recorded (1, 2, 3, or 4).
+-   `transcript_centre` and `transcript_recording_date` tells us where
+    and when the transcript was recorded.
+
+We will give more detailed summary information after the filtering and 
+preprocessing steps (@sec-data-desc).
+
+# Formant tracking with FastTrack
+
+FastTrack [@barreda2021fast] provides a more robust alternative to the
+default automatic formant tracking method in Praat [@boersma2024praat]. 
+FastTrack is a Praat plugin which fits a
+series of alternative formant tracks, fits polynomial models through
+each alternative track, and decides on a winner on the basis of a series of
+heuristics applied to both the formant tracks and models.
+
+FastTrack has a series of user-adjustable options. Barreda [-@barreda2021fast]
+recommends that users adjust these options to match their speakers.
+
+Our first approach to formant tracking applied FastTrack using LaBB-CAT's
+integration with FastTrack. However, our need to track the formants of
+very young child speech required us to adjust settings which are unavailable 
+through LaBB-CAT. In particular, we applied hard boundaries for the possible
+frequency values of formants from some vowel types. Additionally, we needed to
+examine alternative analyses produced by FastTrack to determine how and why 
+our initial attempts were failing. Consequently, we decided to process the
+formants by downloading all audio files from LaBB-CAT and applying FastTrack
+locally.
+
+The path we took may well be useful to other researchers, so we present
+it in some detail here. We first present our original formant tracking and
+show what went wrong (@sec-labbcat-int). We then set out the method for
+extracting the required audio, locally processing it, and determining 
+appropriate FastTrack settings (@sec-local). Finally, we validate the settings
+we decided on by spot checking 30 tokens from each vowel (@sec-validation).
+
+## LaBB-CAT integration {#sec-labbcat-int}
+
+LaBB-CAT integrates with FastTrack and allows control of many of the options
+for formant extraction. Our initial formant extraction used 
+FastTrack recommendations for speakers less than five foot tall (152cm).
+This cut off height is significantly taller than the expected height of a five
+year old in New Zealand. In New Zealand, the median height for five year old
+boys is 110cm and for five year old girls is 109cm ([Te Whatu Ora](https://www.tewhatuora.govt.nz/for-the-health-sector/specific-life-stage-health-information/child-health/well-child-tamariki-programme/growth-charts)).
+
+The code below again requires access to our LaBB-CAT instance, and is provided
+for documentation purposes only. Behind the scenes, this document loads the
+result of running this code so that subsequent blocks will run.
+
+```{r}
+#| eval: false
+#| code-fold: true
+formants <- processWithPraat(
+  labbcat.url,
+  vowels$MatchId, vowels$start, vowels$end,
+  praatScriptFastTrack(
+    formants = c(1,2),
+    sample.points = c(0.5),
+    lowest.analysis.frequency = 5500,
+    # Use of NULL here turns off differentiation for male and female speakers.
+    lowest.analysis.frequency.male = NULL,
+    highest.analysis.frequency = 7500,
+    highest.analysis.frequency.male = NULL,
+    gender.attribute = "participant_gender",
+    value.for.male = "M",
+    time.step = 0.002,
+    tracking.method = "burg",
+    number.of.formants = 3,
+    maximum.f1.frequency = 1200,
+    maximum.f1.bandwidth = NULL,
+    maximum.f2.bandwidth = NULL,
+    maximum.f3.bandwidth = NULL,
+    minimum.f4.frequency = 2900,
+    enable.rhotic.heuristic = TRUE,
+    enable.f3.f4.proximity.heuristic = TRUE,
+    number.of.steps = 24,
+    number.of.coefficients = 5
+  ),
+  # Take audio 0.025s either side of token start and end.
+  window.offset = 0.025
+)
+
+vowels <- bind_cols(vowels, formants)
+
+vowels <- vowels %>% 
+  rename(
+    time = time_0_5,
+    F1 = f1_time_0_5,
+    F2 = f2_time_0_5
+  )
+
+write_rds(vowels, here('data', 'vowels_default_ft.rds'))
+```
+
+```{r}
+#| include: false
+vowels <- read_rds(here('data', 'vowels_default_ft.rds'))
+```
+
+We'll now visualise the default formant readings in the vowel space. 
+
+First, we define a plotting function.
+
+```{r}
+plot_vs <- function(in_data, vowel_colours, alpha_level = 0.2) {
+  
+  means <- in_data %>% 
+    group_by(
+      vowel
+    ) %>% 
+    summarise(
+      F1 = mean(F1, na.rm=TRUE),
+      F2 = mean(F2, na.rm=TRUE),
+      winner = "MEAN"
+    )
+  
+  out_plot <- in_data %>% 
+    ggplot(
+      aes(
+        x = F2, 
+        y = F1, 
+        colour = vowel
+      )
+    ) + 
+    geom_point(alpha = alpha_level, size = 1) + 
+    stat_ellipse(level=0.67, linewidth=1) +
+    geom_point(data = means, size = 4) +
+    scale_x_reverse(limits = c(4500, 0)) + 
+    scale_y_reverse(limits = c(2000, 0)) + 
+    scale_colour_manual(values=vowel_colours)
+  
+  out_plot
+}
+```
+
+We then apply the function: 
+
+```{r}
+#| label: fig-all-default
+#| fig.cap: "All monophthong tokens, with default FastTrack settings for speakers below 5ft."
+ft_default_plot <- vowels %>% 
+  plot_vs(vowel_colours=vowel_colours) +
+  labs(
+    title = "F1 and F2 for All Monophthongs",
+    subtitle = "FastTrack Defaults, 1 s.d. ellipses.",
+    colour = "Vowel"
+  )
+
+ft_default_plot
+```
+
+@fig-all-default shows a large number of high-F1 outliers. This is clear at the
+bottom of the vowel space plot. However, the biggest problem is the _width_
+of the ellipses for our high front vowels.
+
+This is clearer if we look at a subset of the vowels. In this case,
+<span style="font-variant: small-caps;">fleece</span>, 
+<span style="font-variant: small-caps;">dress</span> and <span style="font-variant: small-caps;">trap</span>.
+
+```{r}
+#| label: fig-high-default
+#| fig-cap: "All FLEECE, DRESS, and TRAP tokens, with default FastTrack settings for speakers below 5ft."
+vowels %>%
+  filter(
+    vowel %in% c('FLEECE', 'DRESS', 'TRAP')
+  ) %>%
+  plot_vs(
+    vowel_colours = vowel_colours,
+    alpha_level = 0.3
+  ) + 
+  labs(
+    title = "F1 and F2 for FLEECE, DRESS, and TRAP Monophthongs",
+    subtitle = "FastTrack Defaults, 1 s.d. ellipses",
+    colour = "Vowel"
+  )
+```
+
+There is an extreme spread of F2 values for these vowels. The ellipses suggest a
+majority of the tokens are in sensible places, but there are a _very_ large
+number of implausible values in the data frame. In particular, none of these
+tokens should be at the very back of the vowel space.
+
+To determine the origin of these bad values, we looked at a sample of tokens and
+determine if alternative FastTrack settings would be appropriate. As noted
+above, this required us to process the data locally.
+
+## Local processing {#sec-local}
+
+### Determine FastTrack settings
+
+There are two broad categories of setting which we can modify: 
+
+1. The range of upper frequency limits within which FastTrack generates and
+compares analyses.
+2. Hard limits on the mean value of each formant track.
+
+We will look at a sample of analyses of vowel tokens to determine how we should
+modify our settings in each category. We'll start the process by making some
+changes to upper frequency limits on the basis of the plots we have already seen
+(@fig-all-default).
+
+The most obvious explanation for the poor results of our formant tracking above
+is that we have set the maximum frequency too low to capture small children's
+speech. To see a particularly clear example of what can happen when the maximum
+frequency is set too low, look at the following 'before' and 'after' plots
+(@fig-example).
+
+::: {#fig-example layout-ncol=2}
+
+![Before (Max frequency = 6457Hz)](../images/before_AV6E_ZCBCOI5R_T1_80.png){#fig-before}
+
+![After (Max frequency = 8870Hz](../images/after_AV6E_ZCBCOI5R_T1_80.png){#fig-after}
+
+A vowel token before and after changes to FastTrack settings. The green line
+indicates F2 and the formant cut off for the analysis is at the top of each
+plot.
+:::
+
+In this kind of case, the only place for the second formant to go using the
+default settings is in the empty(ish) space between, roughly, 1000Hz and 3500Hz. 
+
+@fig-all-default suggests that the front vowel have a bigger problem here than
+the others (their expected F2 values are higher, so they should be more likely
+to run in to this problem).
+
+So we set the following range of upper frequency cut off values for the 'front',
+'back' or 'other' vowels:
+
+- 'Front vowels' (<span style="font-variant: small-caps;">fleece, dress, nurse, goose, trap, kit</span>): 6000-9000Hz.
+- 'Back vowels' (<span style="font-variant: small-caps;">lot, thought, foot</span>): 5000-8000Hz.
+- 'Other vowels' (<span style="font-variant: small-caps;">strut, start, schwa</span>): 5500-8500Hz
+
+For comparison, recall that the original settings were 5500 to 7500Hz for all
+vowels.
+
+We apply these settings to a random sample of vowel tokens and then determine
+whether or not there is any evidence that the range needs to be changed and
+whether the addition of hard limits on formant ranges would enable FastTrack to
+select a better analysis.
+
+The code block below (folded by default) generates the samples (n=25 for each
+vowel) and extracts the relevant audio from LaBB-CAT. Again, it requires access
+to the LaBB-CAT instance.
+
+```{r}
+#| code-fold: true
+#| eval: false
+vowel_types <- vowels$vowel %>% unique()
+
+# This dataframe will contain the samples from each vowel
+samples <- tibble(
+  vowel = vowel_types
+)
+
+# Create a function to apply to each vowel type to generate a sample of 25.
+create_sample <- function(vowel_type) {
+  # Create directory to hold the sample.
+  dir.create(here('praat', vowel_type), recursive = TRUE)
+  
+  # Create sample.
+  sample_vowels <- vowels %>% 
+    filter(
+      vowel == vowel_type
+    ) %>% 
+    slice_sample(n=25)
+  
+  # Get sound files from LaBB-CAT
+  sample_files <- getSoundFragments(
+    labbcat.url,
+    ids = sample_vowels$transcript,
+    start.offsets = sample_vowels$start - 0.025,
+    end.offsets = sample_vowels$end - 0.025,
+    path = here("praat", vowel_type, "sounds")
+  )
+  
+  # Get filename.
+  sample_vowels <- sample_vowels %>% 
+    mutate(
+      file = str_extract(sample_files, "[A-Za-z0-9_\\.\\-]*$")
+    )
+  
+  # Processing with FastTrack requires file information. This is
+  # created here using the `fasttrackr` package's `makefileinformation`
+  # function.
+  sample_info <- makefileinformation(here('praat', vowel_type))
+
+  sample_info <- sample_info %>% 
+    left_join(
+      sample_vowels %>% 
+        select(file, vowel)
+    ) %>% 
+    select(
+      -label
+    ) %>% 
+    rename(
+      label = vowel
+    ) %>% 
+    relocate(number, file, label)
+
+  # Write the file information to the relevant folder.
+  write_csv(sample_info, here('praat', vowel_type, 'file_information.csv'))
+  
+  # Return the sample.
+  sample_vowels
+}
+
+# Apply function to all vowel types.
+samples <- samples %>% 
+  mutate(
+    sample = map(vowel, create_sample)
+  )
+
+# We save information about the samples.
+write_rds(samples, here('data', 'samples.rds'))
+```
+
+```{r}
+#| include: false
+samples <- read_rds(here('data', 'samples.rds'))
+```
+
+
+In order to process these audio files, we used FastTrack with Praat
+version 6.1.09. FastTrack does not have version numbers, but was downloaded
+on the 9th of March, 2023. The version of FastTrack available on that date 
+can be found [here](https://github.com/santiagobarreda/FastTrack/tree/3d0482f4675aed85bc15635a4af423440b3092fc). We used the 'Track folder...' option visible when Praat is opened.
+
+We used 5 coefficient for prediction, 24 candidate analyses within the limits
+set, a time step of 0.002 seconds, the Burg tracking method, the `dct` basis
+function and `mae` errors. We enabled the F1 < 1200Hz, F4 > 2900Hz, and F3 and
+F4 proximity heuristics and turned off the rhotic heuristic.
+
+If you are repeating these steps, make sure to tick the 'Make images comparing
+analyses' box. If you do not, you will be unable to determine whether hard
+frequency limits might improve your results.
+
+#### Vowel-by-vowel {#sec-vowel-by-vowel}
+
+Working through these samples was a long process. The process, for each vowel,
+is summarised in the tabs which appear a after a few paragraphs below.
+
+The code folded below loads the formants selected by FastTrack.
+```{r}
+#| code-fold: true
+
+# Load the winning values from FastTrack. We read in the `aggregated_data.csv`
+# file produced by FastTrack for each vowel type and analysis and the
+# `winners.csv` file to tell us which of the analyses tried by FastTrack was
+# considered best.
+fasttrack_info <- samples %>% 
+  mutate(
+    ft_data = map(vowel, ~ read_csv(
+        here('praat', .x, 'processed_data', 'aggregated_data.csv')
+      )
+    ),
+    winners = map(vowel, ~ read_csv(here('praat', .x, 'winners.csv')) %>% select(winner))
+  ) %>% 
+  select(vowel, ft_data, winners) %>% 
+  unnest(c(ft_data, winners))
+
+# Fasttrack will ignore files which it cannot fit models to. Usually this is 
+# because the token is too short. We want to know about these, for the purposes
+# of the test below. The following code adds these tokens to the data from 
+# the samples.
+
+fasttrack_vowels <- samples %>%
+  select(sample) %>% 
+  unnest(sample) %>% 
+  mutate(
+    # remove '.wav' from filename. Enables left join below.
+    file = str_sub(file, end = -5)
+  ) %>% 
+  select(vowel, file, word, start, end, MatchId, URL, noise, meanPitch) %>% 
+  mutate(
+    token_dur = end - start
+  ) %>% 
+  left_join(fasttrack_info, by = c("vowel", "file")) %>% 
+  mutate(
+    # if there is no 'winner' value, the token hasn't been tracked by 
+    # fasttrack.
+    tracked = !is.na(winner)
+  )
+```
+
+In order to plot the results of our local processing, we slightly modify the
+previous vowel space plotting function. It now includes integers which identify
+the FastTrack analysis which was selected for the token, with 1 indicating the
+lowest upper bound tried and 24 indicating the highest.
+
+```{r}
+plot_vs_ft <- function(in_data) {
+  
+  means <- in_data %>% 
+    group_by(
+      vowel
+    ) %>% 
+    summarise(
+      f1 = mean(f1, na.rm=TRUE),
+      f2 = mean(f2, na.rm=TRUE),
+      winner = "MEAN"
+    )
+  
+  out_plot <- in_data %>% 
+    ggplot(
+      aes(
+        x = f2, 
+        y = f1, 
+        colour = vowel, 
+        label = winner
+      )
+    ) + 
+    geom_text(alpha = 0.8, size = 2) + 
+    stat_ellipse() +
+    geom_point(data = means, size = 4) +
+    scale_x_reverse(limits = c(4500, 0)) + 
+    scale_y_reverse(limits = c(2000, 0)) + 
+    scale_colour_manual(values=vowel_colours) +
+    labs(x = "F2", y = "F1")
+  
+  out_plot
+}
+```
+
+We then generate an overall plot:
+
+```{r}
+#| label: fig-plot-demo
+#| fig.cap: |
+#|   Sampled data for all vowel types. Integers indicate which FastTrack
+#|   analysis was selected (1-24).
+fasttrack_vowels <- fasttrack_vowels %>% 
+  rename(
+    f1 = f13,
+    f2 = f23
+  )
+
+fasttrack_vowels %>% 
+  plot_vs_ft()
+```
+
+We still have some very wide ellipses. This is not surprising given lower token 
+count (25 for each vowel). We'll look at these in more detail, vowel-by-vowel,
+below.
+
+Which analysis tends to win for each vowel type? That is, which of the 24 steps between the minimum
+frequency and the maximum analysis frequency is the winning analysis? 
+We display this in a histogram:
+
+```{r}
+#| label: fig-ft-hist
+#| fig.cap: |
+#|   Histogram of winning FastTrack analyses across all vowel types.
+fasttrack_vowels %>% 
+  ggplot(
+    aes(
+      x = winner,
+      fill = vowel
+    )
+  ) +
+  geom_histogram(bins=24)
+```
+
+The 'winner' values in this plot are the 'step' which won. The steps move from
+the lowest allowable maximum frequency to the highest. We see here that the 1st
+and 24th steps win more than the other analyses. In such cases, it may be that
+the true analysis would be found at a more extreme value.
+
+This plot suggests, for instance, that there might be a problem with the 
+[thought]{.smallcaps} vowel. The relative majority of
+[thought]{.smallcaps} tokens seem to have the first analysis as the winner. This
+suggests that perhaps the lower bound needs to be lower. We will examine this
+further below.
+
+For each vowel, we will plot the
+winning analyses from the sample in F1/F2 space with a number indicating which
+of the analyses won. The panel below enables you to switch between vowels.
+At the bottom of each panel, a decision will be made about the appropriate 
+FastTrack settings for the relevant vowel.
+
+::: {.panel-tabset}
+
+##### DRESS
+
+```{r}
+#| label: fig-dress-sample
+#| fig-cap: "DRESS tokens in sample. Numbers indicate which FastTrack analysis won."
+fasttrack_vowels %>% 
+  filter(
+    tracked,
+    vowel == "DRESS"
+  ) %>% 
+  plot_vs_ft()
+```
+
+We will look at the three tokens with very low F2 and F1, indicated with '2', '1'
+and '1' in the top right. We'll also look at the tokens with F1 above 1000Hz.
+
+These analyses are available for view in the project repository. We will talk 
+through a few examples here.
+
+![](../images/UXX8_Z6244PSW_T4_ON_20211119_OA5SKD2NZQ__96.857-96.977_comparison.png)
+These are the analyses considered for the token with file name `UXX8_Z6244PSW_T4_ON_20211119_OA5SKD2NZQ__96.857-96.977.wav`. It is one of the
+two '1's at the top right of @fig-dress-sample. The winning analysis,
+the first analysis, is surrounded by a thick black box. The yellow dots and line
+indicate F1 and the green indicates F2. We see that the first analysis is 
+collapsing F1 and F2 together and the putative F3 (the blue line) is a more
+plausible F2. If we look at the alternative analyses, we see that there is a 
+higher frequency analysis which produces a better F1 and F2 (reliably from
+around the 10th analysis, reading left-to-right and top-to-bottom). As noted above, 
+we can encourage FastTrack towards these alternative analyses by setting a 
+hard limit on F1 and F2 values.
+
+We now look at the token which appears with '18' at the bottom right of Figure
+(@fig-dress-sample). 
+
+![](../images/AV6E_NCFLYZ5I_T4_ON_20211117_0N64QRXC1T__91.734-91.905_comparison.png)
+This is a token from the word 'fell', which comes before a liquid and is,
+perhaps unsurprisingly, not much like a traditional [dress]{.smallcaps} vowel.
+The analysis picked by FastTrack looks OK.
+
+The token in question, outside the context of the word, is the following:
+<audio controls> <source src="../audio/AV6E_NCFLYZ5I_T4_ON_20211117_0N64QRXC1T__91.734-91.905.wav" type="audio/wav">
+</audio>
+
+This kind of case will be filtered out below when we remove all tokens
+preceding liquids.
+
+Manual inspection of the other cases doesn't reveal obvious problems.
+
+There were eight tokens which could not be tracked by FastTrack. These were:
+```{r}
+# A function to generate summary tables.
+untracked_summary <- function(vowel_name) {
+  fasttrack_vowels %>% 
+    filter(
+      vowel == vowel_name,
+      !tracked
+    ) %>% 
+    select(token_dur, meanPitch, word, noise)  
+}
+
+untracked_summary("DRESS")
+```
+
+These were all very short (see left column `token_dur` for duration in seconds),
+with no obvious pattern in word or pitch. They did not occur in particularly
+noisy portions.
+
+**Decision:** set a lower bound on [dress]{.smallcaps} F2 at 1500 and upper 
+bound of 4000.
+
+##### FLEECE
+
+
+```{r}
+#| label: fig-fleece-sample
+#| fig-cap: "FLEECE tokens in sample. Numbers indicate which FastTrack analysis won."
+fasttrack_vowels %>% 
+  filter(
+    tracked,
+    vowel == "FLEECE"
+  ) %>% 
+  plot_vs_ft()
+```
+
+The majority of these values are not in strange places for a small child's
+[fleece]{.smallcaps} vowel. 
+
+The token outside the ellipse and marked '2' is a classic case of an F2 being
+fit through empty space:
+
+![](../images/F5CI_1G75P3TV_T4_ON_20211116_R4GINAN4H8__62.533-62.676_winner_.png)
+In this case, analyses with a higher cut off fix the problem.
+
+A more problematic case is `KSGT_QACKW1N6_T1_ON_20210611_KNOT605KHV__48.485-48.706`. 
+The winning analysis is:
+
+![](../images/KSGT_QACKW1N6_T1_ON_20210611_KNOT605KHV__48.485-48.706_winner_.png)
+
+Here, the F2 line (green) is again, going through empty space. However, it is 
+going through at a value plausible for an F2. It looks like there is not much 
+information in the audio. We enact a bandwidth-based filtering approach below 
+and will check whether this token is excluded by it.
+
+The token outside the ellipse which is labelled '5' is a token of 'the' which
+sounds, on listening, to be an instance of the [strut]{.smallcaps} vowel which
+has been incorrectly categorised in the course of forced alignment. The
+appearance of this token well outside the ellipse does not indicate a failure of
+formant tracking.
+
+Finally, the token `ILA_T1_SX1LTCO7_SR_30072020__36.435-36.652` is an 
+interesting case where the putative F2 is at a plausible value for a [fleece]{.smallcaps} F2, but is too low in the spectrogram. The correct 
+analysis doesn't appear until the cut off is around 8000Hz. We have no way to
+avoid this kind of problem. It seems to occur in a small minority of cases 
+in this sample. We will also check this token when we institute a 
+bandwidth-based filtering step below.
+
+The untracked tokens were:
+```{r}
+untracked_summary("FLEECE")
+```
+
+Each of these had a very short duration.
+
+**Decision:** set a lower bound on [dress]{.smallcaps} F2 at 1500 and upper bound
+of 4000.
+
+##### TRAP
+
+```{r}
+#| label: fig-trap-sample
+#| fig-cap: "TRAP tokens in sample. Numbers indicate which FastTrack analysis won."
+fasttrack_vowels %>% 
+  filter(
+    tracked,
+    vowel == "TRAP"
+  ) %>% 
+  plot_vs_ft()
+```
+
+The token with very high F1, marked '17', outside the ellipse, has an
+acceptable spectrogram. The token outside the ellipse marked '5' is an instance
+of a token with a bad start time.
+
+![](../images/999I_HFRCOYXN_T1_ON_20210614_9TZRESGTFU__55.015-55.275_winner_.png)
+Without manually rechecking all segments, there is no way to avoid this kind of
+error coming up in some cases.
+
+```{r}
+untracked_summary("TRAP")
+```
+
+One very short token was not tracked.
+
+**Decision:** set a lower bound on F2 of 1200 and an upper bound of 3500.
+
+##### NURSE
+
+```{r}
+#| label: fig-nurse-sample
+#| fig-cap: "NURSE tokens in sample. Numbers indicate which FastTrack analysis won."
+fasttrack_vowels %>% 
+  filter(
+    tracked,
+    vowel == "NURSE"
+  ) %>% 
+  plot_vs_ft()
+```
+
+This is a reasonably tight ellipse. Most of the winners look OK.
+
+The token with an F1 above 1000 has some serious problems. But none of the 
+alternative analyses are any better. It may be that a lower cut off would 
+produce a better analysis. If so, we could categorise [nurse]{.smallcaps}
+as an 'other' vowel. We won't do this, but note it as a possible alternative
+path.
+
+```{r}
+untracked_summary("NURSE")
+```
+
+All tokens of [nurse]{.smallcaps} could be tracked.
+
+**Decision:** set 1200 as a lower bound for F2 and an upper bound of 3500.
+
+##### GOOSE
+
+
+```{r}
+#| label: fig-goose-sample
+#| fig-cap: "GOOSE tokens in sample. Numbers indicate which FastTrack analysis won."
+fasttrack_vowels %>% 
+  filter(
+    tracked,
+    vowel == "GOOSE"
+  ) %>% 
+  plot_vs_ft()
+```
+
+Our [goose]{.smallcaps} tokens have a very wide spread.
+
+The token with a very high F1 is `KEN_T2_2CDLJ9EQ_SR_02122020__57.264-57.336`.
+Listening on LaBB-CAT reveals that the audio is dominated by the sound of a door
+closing, yet this does not appear in the noise tier.
+
+```{r}
+untracked_summary("GOOSE")
+```
+
+All tokens could be tracked.
+
+**Decision:** set 1000 as a lower bound for F2 and 3500 as the upper bound.
+
+##### KIT
+
+```{r}
+#| label: fig-kit-sample
+#| fig-cap: "KIT tokens in sample. Numbers indicate which FastTrack analysis won."
+fasttrack_vowels %>% 
+  filter(
+    tracked,
+    vowel == "KIT"
+  ) %>% 
+  plot_vs_ft()
+```
+
+There are no unambiguous formant tracking errors in this sample.
+
+```{r}
+untracked_summary("KIT")
+```
+
+All untracked tokens were very short.
+
+**Decision:** set 1250 as a lower bound for F2 and 3500 as the upper bound.
+
+##### THOUGHT
+
+```{r}
+#| label: fig-thought-sample
+#| fig-cap: "THOUGHT tokens in sample. Numbers indicate which FastTrack analysis won."
+fasttrack_vowels %>% 
+  filter(
+    tracked,
+    vowel == "THOUGHT"
+  ) %>% 
+  plot_vs_ft()
+```
+
+The ellipse is in the right generate area of the vowel space. Visual inspection
+of the winning analyses reveals some common error types. 
+
+Many tokens are pre-liquid, and so will be filtered below. For instance, 
+'fall' is frequent in the corpus.
+
+In some cases, we see what looks like F0 being marked as F1. For instance, see
+KSGT_STWQV47U_T1_ON_20210615_8OUAEYVRYO__108.462-108.596. 
+
+![](../images/KSGT_STWQV47U_T1_ON_20210615_8OUAEYVRYO__108.462-108.596_winner_.png)
+
+Alternative analyses do better with F2, but continue to put F1 somewhere between
+the actual F0 and F1. 
+
+The token with very high F2 is `WES_T1_YXFY5YRO_SR_15072020__35.775-35.955`. It
+sounds more like [lot]{.smallcaps}.
+
+**Decision:** set a upper bound on F2 of 2250. Set a lower bound on F1 at 350.
+
+##### LOT
+
+```{r}
+#| label: fig-lot-sample
+#| fig-cap: "LOT tokens in sample. Numbers indicate which FastTrack analysis won."
+fasttrack_vowels %>% 
+  filter(
+    tracked,
+    vowel == "LOT"
+  ) %>% 
+  plot_vs_ft()
+```
+
+There is no obvious systematic error which could be corrected in the winning
+analyses. When the reading is dubious, it is not clear that there is a better
+reading available.
+
+The token in the top right marked '6' does sound more like [thought]{.smallcaps}
+when listened to. The winning analyses makes the F2 much higher than it should be
+at the start of the token but the midpoint is fine.
+
+HAW_T2_X6NPFKXX_SR__156.155-156.307_winner_.png looks like it passes through 
+empty space and, when listened to, is barely audible. We will check whether 
+this is filtered out by the bandwidth filter.
+
+```{r}
+untracked_summary("LOT")
+```
+
+Seven tokens were not trackable due to their length.
+
+**Decision:** Set an upper bound on F2 of 2500.
+
+##### FOOT
+
+```{r}
+#| label: fig-foot-sample
+#| fig-cap: "FOOT tokens in sample. Numbers indicate which FastTrack analysis won."
+fasttrack_vowels %>% 
+  filter(
+    tracked,
+    vowel == "FOOT"
+  ) %>% 
+  plot_vs_ft()
+```
+
+There are no obvious systematic errors in the winning analyses.
+
+```{r}
+untracked_summary("FOOT")
+```
+
+There were eight untrackable tokens in the sample.
+
+##### START
+
+```{r}
+#| label: fig-start-sample
+#| fig-cap: "START tokens in sample. Numbers indicate which FastTrack analysis won."
+fasttrack_vowels %>% 
+  filter(
+    tracked,
+    vowel == "START"
+  ) %>% 
+  plot_vs_ft()
+```
+
+There is a very wide spread of both F1 and F2 values in this sample. Manual 
+inspection shows a fairly typical range of errors. 
+
+The token `HAW_T2_BBF9Y0IL_SR__107.098-107.198` shows the kind of problem which
+can occur when F1 and F2 are very close:
+
+![](../images/HAW_T2_BBF9Y0IL_SR__107.098-107.198_comparison.png)
+
+There is no good analysis here, presumably because the real F1 and F2 are both
+somewhere between 100 and 1500Hz.
+
+One question with [start]{.smallcaps} is whether `Tama` is being produced with
+[start]{.smallcaps} or [trap]{.smallcaps}. Are the instances with [trap]{.smallcaps}
+F2 above 2000Hz in this sample all instances of 'Tama'?
+
+```{r}
+fasttrack_vowels %>% 
+  filter(
+    tracked,
+    vowel == "START",
+    f2 > 2000
+  ) %>% 
+  select(
+    file, word
+  )
+```
+
+It may be wise to remove 'Tama' tokens if analysing [start]{.smallcaps}. This
+vowel is not analysed in this paper, so we leave this as a note for future
+projects.
+
+```{r}
+untracked_summary("START")
+```
+Five very short tokens were excluded.
+
+**Decision:** Set lower bound on F2 at 900.
+
+##### STRUT
+
+```{r}
+#| label: fig-strut-sample
+#| fig-cap: "STRUT tokens in sample. Numbers indicate which FastTrack analysis won."
+fasttrack_vowels %>% 
+  filter(
+    tracked,
+    vowel == "STRUT"
+  ) %>% 
+  plot_vs_ft()
+```
+
+There are some extreme outliers here.
+
+The token marked '22' at the left of the image is 
+`AV6E_ZCBCIU5R_T1_ON_20210623_ZFICT8NP0J__103.079-103.159` and is an instance
+of a formant being drawn through empty space. It is likely to be filtered
+out either by the standard deviation filter or the bandwidth filter. We will
+check this below.
+
+The very low F1, marked '16' at the top of the plot, is an instance were there 
+is a very faint line which might be the F1 at around 700Hz. The token is
+`HAW_T2_FLAGGED_KXU13BOU_SR__61.462-61.595`. None of the alternative analyses
+seem to pick this up, so it will not be fixed by setting a hard bound on 
+formants. We will check whether it is filtered out at the end of the filtering 
+stages.
+
+**Decision:** Set lower bound on F2 at 900.
+
+##### SCHWA
+
+We won't manually check [schwa]{.smallcaps} as it will be filtered out before
+the full analysis (following previous research on the NZE vowel system, cited
+throughout the paper).
+
+:::
+
+### Apply FastTrack to all tokens {#sec-apply}
+
+In order to apply the settings we have determined above, we must first extract
+the audio for each token. This requires all of the sounds to be in a `sounds`
+folder and a `file_information.csv` file which tells FastTrack about each file
+(in particular, it says which vowel category a sound belongs to so the correct
+limits can be applied.
+
+The formant bounds determined above are, as a table:
+
+| Vowel |	F1 (lower) | F2 (upper)	| F2 (lower) |	F2 (upper) |
+|-------|------------|------------|------------|-------------|
+| START |	350 |	1500 |	900 |	3500 |
+| THOUGHT |	350 |	1500 |	500 |	2250 |
+| TRAP |	350 |	1500 |	1200 |	3500 |
+| NURSE |	350 |	1500 |	1200 |	3500 |
+| DRESS |	350 |	1500 |	1500 |	4000 |
+| FLEECE |	350 |	1500 |	1500 |	4000 |
+| KIT |	350 |	1500 |	1250 |	3500 |
+| LOT |	350 |	1500 |	500 |	2500 |
+| GOOSE |	350 |	1500 |	1000 |	3500 |
+| FOOT |	350 |	1500 |	500 |	3500 |
+| STRUT |	350 |	1500 |	900 |	3500 |
+
+We will also increase the minimum cut off for the back vowels to 5500Hz rather
+than 5000Hz.
+
+Note that we set the same bounds for F1 across all vowels and add some 
+additional values beyond those specified in the vowel-by-vowel analysis above
+(i.e., we fill out the table with default values).
+
+These are applied to the **mean formant value** of the selected analysis. This
+means that the midpoint formant reading can fall outside of the bounds we
+specify. We decided not to attempt to modify the FastTrack code to apply the
+formant value limits to the midpoint.
+
+Local processing needs to be done for each vowel type. The resulting directory
+structure is:
+
+- local processing directory.
+  - `Front` 
+    - `sounds`
+      - Sound files here.
+    - `file_information.csv`
+  - `Back`
+    - `sounds`
+      - Sound files here.
+    - `file_information.csv`
+  - `Other`
+    - `sounds`
+      - Sound files here.
+    - `file_information.csv`
+
+The following code block creates this structure and downloads the data.
+
+```{r}
+#| eval: false
+#| code-fold: true
+
+# It is likely you will want to process these outside of your project directory.
+# use the `path_to_local_processing` variable to store the path to your local
+# processing directory.
+path_to_local_processing <- '/home/jwb/Documents/kids_local_processing/' # Modify this string.
+
+# Establish front, back and mid categories.
+vowels <- vowels %>% 
+  mutate(
+    vowel_type = case_when(
+      vowel %in% c('FLEECE', 'DRESS', 'NURSE', 'GOOSE', 'TRAP', 'KIT') ~ "Front",
+      vowel %in% c('LOT', 'THOUGHT', 'FOOT') ~ "Back",
+      .default = "Other"
+    )
+  )
+
+# Create directory structure
+for (i in c("Front", "Back", "Other")) {
+  dir.create(
+    here(path_to_local_processing, i, "sounds"), 
+    recursive = TRUE
+  )
+}
+
+# Starting nzilbb.labbcat within 'map' doesn't always trigger authentication so we 
+# call getLayerIds here as a way to ensure we are authenticated.
+getLayerIds(labbcat.url)
+
+# Extract audio files.
+match_extraction <- vowels %>% 
+  group_by(vowel_type) %>% 
+  nest() %>% 
+  mutate(
+    extracted_files = map2(
+      data, 
+      vowel_type,
+      ~ getSoundFragments(
+        labbcat.url,
+        ids = .x$transcript,
+        start.offsets = .x$start - 0.025,
+        end.offsets = .x$end - 0.025,
+        path = paste0(path_to_local_processing, .y, "/sounds")
+      )
+    )
+  )
+
+match_extraction <- match_extraction %>% 
+  mutate(
+    data = map2(
+      data, 
+      extracted_files, 
+      ~ mutate(
+        .x, 
+        file = str_extract(.y, "[A-Za-z0-9_\\.\\-]*$")
+      )
+    ),
+    file_info = map(
+      vowel_type, 
+      ~ makefileinformation(paste0(path_to_local_processing, .x))
+    )
+  )
+
+
+match_extraction <- match_extraction %>% 
+  mutate(
+    file_info = map2(
+      file_info,
+      data,
+      ~ .x %>%
+        left_join(
+          .y %>% 
+            select(file, vowel)
+        ) %>% 
+        select(-label) %>% 
+        rename(
+          label = vowel
+        ) %>% 
+        relocate(number, file, label)
+    )
+  )
+
+# save file info
+walk2(
+  match_extraction$file_info,
+  match_extraction$vowel_type, 
+  ~write_csv(
+    .x, 
+    paste0(
+      path_to_local_processing,
+      .y,
+      "/file_information.csv"
+    )  
+  )
+)
+
+# Need to link each token with its audio file.
+token2file <- match_extraction %>% 
+  select(vowel_type, data) %>% 
+  unnest(data) %>% 
+  select(MatchId, vowel_type, file)
+
+write_rds(token2file, here('data', 'token2file.rds'))
+```
+
+We now run FastTrack on each vowel type separately as we did in the previous
+sections to determine the settings to use.
+
+We load the winning formant tracks and take their midpoint with the following
+code block.
+
+```{r}
+#| eval: false
+
+formants <- tibble(
+  vowel_type = c("Back", "Front", "Other")
+)
+
+formants <- formants %>% 
+  mutate(
+    file_list = map(
+      vowel_type,
+      ~ list.files(
+          here(path_to_local_processing, .x, 'formants_winners'), 
+          full.names=T
+        )
+    )
+  ) %>% 
+  unnest(file_list)
+
+get_midpoint_values <- function(formant_path) {
+  f <- formant.read(formant_path)
+  # find midpoint
+  f_mid <- round(f$nx/2)
+  # get f1, f2 and f3 values at midpoint + bandwidths for each
+  formant_values <- c(
+    f$frame[[f_mid]]$frequency[1:3],
+    f$frame[[f_mid]]$bandwidth[1:3]
+  )
+}
+
+# get midpoints
+formants <- formants %>% 
+  mutate(
+    formant_values = map(file_list, get_midpoint_values)
+  )
+
+formants <- formants %>% 
+  unnest_wider(formant_values, names_sep = "F")
+
+formants <- formants %>% 
+  rename(
+    F1_50 = formant_valuesF1,
+    F2_50 = formant_valuesF2,
+    F3_50 = formant_valuesF3,
+    F1_band = formant_valuesF4,
+    F2_band = formant_valuesF5,
+    F3_band = formant_valuesF6
+  )
+
+# Load the correspondence between tokens and flies.
+token2file <- read_rds(here('data', 'token2file.rds'))
+
+# join file with vowels.
+vowels <- vowels %>% 
+  left_join(
+    token2file
+  )
+
+formants <- formants %>% 
+  mutate(
+    # Remove full path.
+    file = str_extract(file_list, '[A-Za-z0-9_\\.\\-]*\\.Formant$'),
+    # Change suffix
+    file = str_replace(file, '_winner_\\.Formant', '\\.wav'),
+  )
+
+vowels <- vowels %>% 
+  left_join(
+    formants %>% 
+      select(file, F1_50, F2_50, F3_50, F1_band, F2_band, F3_band)
+  )
+
+write_rds(vowels, here('data', 'tracked_vowels.rds'))
+```
+
+```{r}
+#| include: false
+vowels <- read_rds(here('data', 'tracked_vowels.rds'))
+# Get this in the right place!
+vowels <- vowels %>% 
+    mutate(
+        ethnicity = if_else(ethnicity == "MÄori", "Māori", ethnicity)
+    )
+```
+
+Note that we have extracted F3 measurements as part of our dataset. We
+don't use them in the analysis, but they may be useful for other researchers
+and for post-hoc analysis.
+
+### Validate settings {#sec-validation}
+
+We again take a sample of tokens, and look to see how well the current settings
+perform. This time, unlike in Section (@sec-vowel-by-vowel), we create a list
+of tokens to look at from the local processing directory and copy them across
+to a validation directory within the project folder. This is shared in the
+project repository.
+
+
+```{r}
+#| code-fold: true
+#| eval: false
+
+validation_samples <- vowels %>% 
+  slice_sample(
+    by = "vowel", n = 25
+  )
+
+# We save information about which tokens are in the samples.
+write_rds(validation_samples, here('data', 'validation_samples.rds'))
+
+# Some code is needed to gather these samples up.
+
+# generate image name. 
+validation_samples$file[[1]]
+str_replace(validation_samples$file[[1]], '\\.wav', '_winner_.png')
+
+
+# Create location for the validation samples
+for (i in unique(vowels$vowel)) {
+  dir.create(
+    here('validation', i), 
+    recursive = TRUE
+  )
+}
+
+# transfer image files.
+for (i in seq_along(validation_samples$file)) {
+  file.copy(
+    from = paste0(
+      path_to_local_processing, 
+      validation_samples$vowel_type[[i]],
+      "/images_winners/",
+      str_replace(validation_samples$file[[i]], '\\.wav', '_winner_.png')
+    ),
+    to = here(
+      "validation",
+      validation_samples$vowel[[i]],
+      str_replace(validation_samples$file[[i]], '\\.wav', '_winner_.png')
+    )
+  )
+}
+
+```
+
+We again use a collection of tabs to see the results for each vowel.
+
+::: {.callout-note}
+In each of the tabs below, you can click on the plots to enlarge them.
+:::
+
+::: {.panel-tabset}
+
+#### DRESS
+
+```{r}
+#| lightbox:
+#|   group: dress-images
+#| cache: true
+#| layout-ncol: 5
+
+plot_validation_images <- function(vowel) {
+  images <- list.files(here('validation', vowel), full.names = TRUE)
+  
+  for (image in images) {
+    to_plot <- load.image(image)
+    plot(to_plot, main = str_extract(image, '[A-Za-z0-9\\.\\-\\_]*$'))
+  }
+}
+
+plot_validation_images("DRESS")
+```
+
+#### FLEECE
+
+```{r}
+#| lightbox:
+#|   group: fleece-images
+#| cache: true
+#| layout-ncol: 5
+
+plot_validation_images("FLEECE")
+```
+
+
+#### TRAP
+
+```{r}
+#| lightbox:
+#|   group: trap-images
+#| cache: true
+#| layout-ncol: 5
+#| 
+plot_validation_images("TRAP")
+```
+
+#### NURSE
+
+
+```{r}
+#| lightbox:
+#|   group: nurse-images
+#| cache: true
+#| layout-ncol: 5
+#| 
+plot_validation_images("NURSE")
+```
+
+#### GOOSE
+
+```{r}
+#| lightbox:
+#|   group: goose-images
+#| cache: true
+#| layout-ncol: 5
+
+plot_validation_images("GOOSE")
+```
+
+#### KIT
+
+```{r}
+#| lightbox:
+#|   group: kit-images
+#| cache: true
+#| layout-ncol: 5
+
+plot_validation_images("KIT")
+```
+
+#### THOUGHT
+
+```{r}
+#| lightbox:
+#|   group: thought-images
+#| cache: true
+#| layout-ncol: 5
+
+plot_validation_images("THOUGHT")
+```
+
+#### LOT
+
+```{r}
+#| lightbox:
+#|   group: lot-images
+#| cache: true
+#| layout-ncol: 5
+
+plot_validation_images("LOT")
+```
+
+#### FOOT
+
+```{r}
+#| lightbox:
+#|   group: foot-images
+#| cache: true
+#| layout-ncol: 5
+
+plot_validation_images("FOOT")
+```
+
+#### START
+
+```{r}
+#| lightbox:
+#|   group: start-images
+#| cache: true
+#| layout-ncol: 5
+
+plot_validation_images("START")
+```
+
+#### STRUT
+
+```{r}
+#| lightbox:
+#|   group: strut-images
+#| cache: true
+#| layout-ncol: 5
+
+plot_validation_images("STRUT")
+```
+
+#### SCHWA
+
+```{r}
+#| lightbox:
+#|   group: schwa-images
+#| cache: true
+#| layout-ncol: 5
+
+plot_validation_images("SCHWA")
+```
+
+:::
+
+While there are some errors in the formant tracks above, they are looking 
+good overall. Note again that we are only using F1 and F2 in this project and 
+so do not worry too much about the quality of the F3 readings.
+
+# Filtering and New Variables {#sec-filter}
+
+We load the tracked formants. 
+
+```{r}
+# Set up vowels as a factor
+vowels <- vowels %>% 
+  mutate(
+    vowel = as.factor(vowel)
+  )
+
+# Variables with names ending '_count' will be used at the end of the markdown
+# to plot the filtering process.
+initial_count <- nrow(vowels)
+initial_count
+```
+
+We output the plot in @fig-all-default again on the left and the 
+results of locally processing the tokens on the right. 
+
+```{r}
+#| label: fig-all-alt
+#| fig.cap: |
+#|   All monophthong tokens, with default FastTrack settings (left) 
+#|   and modified settings (right). 
+
+ft_modified_plot <- vowels %>%
+  # remove fast track default data.
+  select(
+    -F1, -F2
+  ) %>% 
+  # replace with locally tracked values
+  rename(
+    F1 = F1_50,
+    F2 = F2_50
+  ) %>% 
+  plot_vs(vowel_colours=vowel_colours) +
+  labs(
+    title = "F1 and F2 for All Monophthongs",
+    subtitle = "Local processing, 1 s.d. ellipses.",
+    colour = "Vowel"
+  )
+
+combined_ft_plot <- ft_default_plot + ft_modified_plot +
+  plot_layout(guides = 'collect')
+combined_ft_plot
+```
+@fig-all-alt is not incredibly revealing. However, we do see some desired
+tightening of the F2 ranges for many of these vowels.
+
+We now move on to a series of filtering steps.
+
+## Demographic Factors
+
+We remove speakers who do not have English amongst their home languages.
+
+The possible values for `home_language` are: `r unique(vowels$home_language)`.
+We select those values which include English.
+
+```{r}
+vowels <- vowels %>% 
+  filter(
+    str_detect(home_language, "English")
+  )
+
+language_count <- nrow(vowels)
+```
+
+
+## Linguistic Factors: Stress, Stopwords, Duration and Following Environment
+
+Rather than filtering the bulk of our data as in [@Brand_2021], we create a 
+series of variables which are related to systematic errors in formant tracking
+and which which can be incorporated into our models.
+
+For instance, instead of removing all stop words
+or unstressed variables, we will allow for the effect of these linguistic
+phenomena to be controlled in our models.
+
+We do this because data is at a premium in this study. We have very low token
+counts for many of the children in the corpus as compared with corpora of adult
+speech. In large adult corpora it is possible to be more relaxed about removing
+tokens.
+
+We track unstressed vowels, but remove tokens of <span style="font-variant:
+small-caps;">schwa</span> and tokens from the words "hana", "hanas", and
+"hana's" as they are variably produced with Māori pronunciation (more like
+[start]{.smallcaps}) or as in "Hannah" ([trap]{.smallcaps}).
+
+```{r}
+vowels <- vowels %>%
+  mutate(
+    stressed = stress != "0"
+  ) %>% 
+  filter(
+    !vowel %in% c("SCHWA", "FOOT"),
+    !word %in% c("hana", "hanas", "hana's")
+  ) %>% 
+  mutate(
+    vowel = droplevels(vowel)
+  )
+
+word_count <- nrow(vowels)
+word_count
+```
+
+We remove tokens without orthography and words containing hesitations. We 
+create a variable to indicate whether a word is a stop word.
+
+```{r}
+vowels <- vowels %>% 
+    filter(
+      !is.na(word),
+      !str_detect(word, "~")
+    )
+
+stopwords <- c(
+  # List from Brand 2021.
+  'a', 'ah', 'ahh', 'am', 'an', 'and', 'are', "aren't", 'as', 'at',
+  'aw', 'because', 'but', 'could', 'do', "don't", 'eh', 'for', 'from', 'gonna',
+  'had', 'has', 'have', 'he', "he's", 'her', 'high', 'him', 'huh', 'i', "i'll",
+  "i'm", "i've", "i'd", 'in', 'into', 'is', 'it', "it's", 'its', 'just', 'mean',
+  'my', 'nah', 'not', 'of', 'oh', 'on', 'or', 'our', 'says', 'she', "she's",
+  'should', 'so', 'than', 'that', "that's", 'the', 'them', 'there', "there's",
+  'they', 'this', 'to', 'uh', 'um', 'up', 'was', "wasn't", 'we', 'were', 'what',
+  'when', 'which', 'who', 'with', 'would', 'yeah', 'you', "you've",
+  # Additional identified stop words.
+  "then", "me", "too", "his",  "off", "onto", "can't", "can", "cos", "said", 
+  "where")
+
+vowels <- vowels %>% 
+    mutate(
+      stopword = word %in% stopwords
+    )
+
+na_word_count <- nrow(vowels)
+na_word_count
+```
+
+
+We create a variable to track following segment category and remove tokens
+preceding liquids.
+```{r}
+vowels <- vowels %>% 
+  mutate(
+    following_segment_category = fct_collapse(
+      fct_na_value_to_level(as_factor(following_segment)),
+      labial = c('m', 'p', 'b', 'f', 'w'),
+      velar = c('k', 'g', 'N'),
+      liquid = c('r', 'l'),
+      final = c(NA),
+      other_level = "other"
+    )
+  )
+
+vowels <- vowels %>% 
+  filter(
+    following_segment_category != 'liquid'
+  )
+
+liquid_count <- nrow(vowels)
+liquid_count
+```
+
+
+## Formant Tracking Errors
+
+We filter out untracked tokens. These are typically untracked due to being
+too short for FastTrack to function. Examples of this were shown above in 
+@sec-vowel-by-vowel.
+
+```{r}
+vowels <- vowels %>% 
+  filter(
+    !is.na(F1_50)
+  )
+
+na_count <- nrow(vowels)
+na_count
+```
+
+Tokens were annotated for background noise. We remove any token which falls in
+an identified noisy section of audio.
+```{r}
+vowels <- vowels %>% 
+  filter(
+    is.na(noise)
+  )
+
+noise_count <- nrow(vowels)
+noise_count
+```
+
+We now carry out a bandwidth-based filtering step. The bandwidth represents the
+span of frequencies with amplitude within +- 3dB of the identified peak. This is
+particularly important in situations where a non-existent formant is picked out.
+We've seen a couple of examples of this in our initial determination of
+FastTrack settings and in our validation of our formant tracking settings (
+again, see @sec-vowel-by-vowel). In cases, as in <span style="font-variant:
+small-caps;">fleece</span> tokens with a very high actual F2, we sometimes end
+up with a putative F2 being traced through the more-or-less empty space in the
+spectrogram between F1 and the (very high) F2. In cases like this, the formant
+bandwidth will be very high. On the other hand, very very small bandwidths are
+likely when certain kinds of noise are being tracked rather than speech. 
+
+First, let's look at the distribution of bandwidths for F1 and  F2.
+
+```{r}
+vowels %>% 
+  select(
+    -F3_band
+  ) %>% 
+  pivot_longer(
+    cols = contains('_band'),
+    values_to = 'bandwidth',
+    names_to = 'formant_type'
+  ) %>% 
+  mutate(
+    formant_type = str_replace(formant_type, '_band', '')
+  ) %>%
+  ggplot(
+    aes(
+      x = bandwidth,
+      colour = formant_type
+    )
+  ) +
+  geom_freqpoly(linewidth=1, stat="density") +
+  xlim(xlim=c(0, 2000)) +
+  labs(
+    title = "Formant Bandwidths"
+  )
+```
+
+These have very large right tails, along with a sizable number of tokens with 
+very low bandwidths (although this is harder to see).
+
+Let's look at some examples. First, we define some variables which contain
+tokens with bandwidth above 500Hz (high bandwidth) and tokens with bandwidth
+below 10Hz (low bandwidth).
+```{r}
+# A subsequent fix to vowel filtering means that this block no longer produces
+# the examples we look at below. It remains here to show the code which 
+# originally generated the sample.
+set.seed(500)
+high_f1_bandwidth <- vowels %>% 
+  filter(
+    F1_band > 500
+  ) %>% 
+  slice_sample(n=10)
+
+high_f2_bandwidth <- vowels %>% 
+  filter(
+    F2_band > 500
+  ) %>% 
+  slice_sample(n=10)
+
+
+low_f1_bandwidth <- vowels %>% 
+  filter(
+    F1_band < 10
+  ) %>% 
+  slice_sample(n=10)
+
+low_f2_bandwidth <- vowels %>% 
+  filter(
+    F2_band < 10
+  ) %>% 
+  slice_sample(n=10)
+
+```
+
+We now load some example images. The following block copies across the relevant
+images from the local processing folder (and so requires access to this, which
+the reader is unlikely to have).
+``` {r}
+#| eval: false
+band_groups <- c("high_f1", "high_f2", "low_f1", "low_f2")
+
+# Create location for the validation samples
+for (i in band_groups) {
+  dir.create(
+    here('bandwidth', i), 
+    recursive = TRUE
+  )
+}
+
+# transfer image files.
+transfer_images <- function(in_data, in_group) {
+
+  for (i in seq_along(in_data$file)) {
+    file.copy(
+      from = paste0(
+        path_to_local_processing, 
+        in_data$vowel_type[[i]],
+        "/images_winners/",
+        str_replace(in_data$file[[i]], '\\.wav', '_winner_.png')
+      ),
+      to = here(
+        "bandwidth",
+        in_group,
+        str_replace(in_data$file[[i]], '\\.wav', '_winner_.png')
+      )
+    )
+  }
+}
+
+transfer_images(high_f1_bandwidth, "high_f1")
+transfer_images(high_f2_bandwidth, "high_f2")
+transfer_images(low_f1_bandwidth, "low_f1")
+transfer_images(low_f2_bandwidth, "low_f2")
+```
+
+The identified high f1 bandwidth tokens are plotted by the following code block.
+
+``` {r}
+#| lightbox:
+#|   group: high-f1-band
+#| cache: true
+#| layout-ncol: 5
+plot_winner <- function(vowel_type, in_group, audio_filename, bandwidth) {
+  to_plot <- load.image(
+    here(
+      'bandwidth',
+      in_group,
+      str_replace(audio_filename, '\\.wav', '_winner_.png')
+    )
+  )
+  plot(
+    to_plot, 
+    main = paste(
+      'Bandwidth:', bandwidth, 'Hz\n',
+      vowel_type, str_extract(audio_filename, '[A-Za-z0-9\\.\\-\\_]*$')
+    ),
+    axes = FALSE
+  )
+}
+
+# Collecting a previous sample (see comment on code block 2 above)
+high_files <- tibble(
+  filename = list.files(
+    here('bandwidth', 'high_f1')
+  )
+)
+
+high_files <- high_files %>% 
+  mutate(
+    transcript = str_extract(filename, "([A-Z0-9_]*)__", group=1),
+    start = as.numeric(
+      str_extract(filename, "([A-Z0-9_]*)__([0-9\\.]*)", group=2)
+    ),
+    bandwidth = map2(
+      transcript, start, 
+      \(t, s) {
+        vowels %>% 
+          filter(
+            transcript == paste0(t, '.slt'),
+            between(start, s-0.05, s+0.05)
+          ) %>% 
+          select(vowel, vowel_type, F1_band)
+      }
+    )
+  ) %>% 
+  unnest_wider(bandwidth)
+
+for (i in seq_along(high_files$filename)) {
+  plot_winner(
+    high_files$vowel_type[[i]],
+    'high_f1',
+    high_files$filename[[i]],
+    round(high_files$F1_band[[i]])
+  )
+}
+```
+
+When looking at these it is important to note that the formant and bandwidth
+readings we are using are midpoint readings.
+
+These are _high bandwidth_ tokens for F1. We are looking to confirm that these
+are indeed _bad readings_. We are looking at the yellow lines at the midpoint.
+
+There are a few different error types here. In some cases, we have very wide,
+thick, black bars in which it is difficult to discern F1 as distinct from F0
+and F2 (e.g. `AV6E_2CDLJ9EQ_...`). We also have the opposite problem (wide empty
+spaces) in other tokens (`HAW_T1_BBF9Y0IL...` and `HAW_T1_BBF9Y0IL...`).
+There are other, quite chaotic tokens (e.g. `P3NP_WE3NU3LF_T4...`). Some tokens
+look OK, such as `HAW_T2_JPEJCXCI_...`. However, the bandwidth on this token 
+is in fact higher than that of tokens which look bad (e.g. `ECA5_TKAB8B7Y...`).
+This is likely unavoidable (as is often the case when filtering data). 
+
+We now look at high bandwidth F2 tokens (the green lines):
+
+```{r}
+#| lightbox:
+#|   group: high-f2-band
+#| cache: true
+#| layout-ncol: 5
+
+# Collecting a previous sample (see comment on code block 2 above)
+high_f2_files <- tibble(
+  filename = list.files(
+    here('bandwidth', 'high_f2')
+  )
+)
+
+high_f2_files <- high_f2_files %>% 
+  mutate(
+    transcript = str_extract(filename, "([A-Z0-9_]*)__", group=1),
+    start = as.numeric(
+      str_extract(filename, "([A-Z0-9_]*)__([0-9\\.]*)", group=2)
+    ),
+    bandwidth = map2(
+      transcript, start, 
+      \(t, s) {
+        vowels %>% 
+          filter(
+            transcript == paste0(t, '.slt'),
+            between(start, s-0.05, s+0.05)
+          ) %>% 
+          select(vowel, vowel_type, F2_band)
+      }
+    )
+  ) %>% 
+  unnest_wider(bandwidth)
+
+for (i in seq_along(high_f2_files$filename)) {
+  plot_winner(
+    high_f2_files$vowel_type[[i]],
+    'high_f2',
+    high_f2_files$filename[[i]],
+    round(high_f2_files$F2_band[[i]])
+  )
+}
+```
+
+It looks like 500Hz is too low for our F2 cut off. The obvious errors being
+picked up here (including, for instance, `SFH9_TYZA8SPF...`) seem to have 
+bandwidths above 1000Hz. 
+
+What happens at the other side of the distribution? i.e. what do tokens with 
+_very low_ bandwidth look like? First we look at F1:
+
+```{r}
+#| eval: true
+
+# Collecting a previous sample (see comment on code block 2 above)
+low_files <- tibble(
+  filename = list.files(
+    here('bandwidth', 'low_f1')
+  )
+)
+
+low_files <- low_files %>% 
+  mutate(
+    transcript = str_extract(filename, "([A-Z0-9_]*)__", group=1),
+    start = as.numeric(
+      str_extract(filename, "([A-Z0-9_]*)__([0-9\\.]*)", group=2)
+    ),
+    bandwidth = map2(
+      transcript, start, 
+      \(t, s) {
+        vowels %>% 
+          filter(
+            transcript == paste0(t, '.slt'),
+            between(start, s-0.05, s+0.05)
+          ) %>% 
+          select(vowel, vowel_type, F1_band)
+      }
+    )
+  ) %>% 
+  unnest_wider(bandwidth)
+
+for (i in seq_along(low_files$filename)) {
+  plot_winner(
+    low_files$vowel_type[[i]],
+    'low_f1',
+    low_files$filename[[i]],
+    round(low_files$F1_band[[i]])
+  )
+}
+```
+
+There's nothing obviously wrong with these low bandwidth F1 tokens visually with
+the exception of `F5CI_S29WR30F...`.
+
+And now F2:
+
+```{r}
+#| eval: true
+# Collecting a previous sample (see comment on code block 2 above)
+low_f2_files <- tibble(
+  filename = list.files(
+    here('bandwidth', 'low_f2')
+  )
+)
+
+low_f2_files <- low_f2_files %>% 
+  mutate(
+    transcript = str_extract(filename, "([A-Z0-9_]*)__", group=1),
+    start = as.numeric(
+      str_extract(filename, "([A-Z0-9_]*)__([0-9\\.]*)", group=2)
+    ),
+    bandwidth = map2(
+      transcript, start, 
+      \(t, s) {
+        vowels %>% 
+          filter(
+            transcript == paste0(t, '.slt'),
+            between(start, s-0.05, s+0.05)
+          ) %>% 
+          select(vowel, vowel_type, F2_band)
+      }
+    )
+  ) %>% 
+  unnest_wider(bandwidth)
+
+for (i in seq_along(low_f2_files$filename)) {
+  plot_winner(
+    low_f2_files$vowel_type[[i]],
+    'low_f2',
+    low_f2_files$filename[[i]],
+    round(low_f2_files$F2_band[[i]])
+  )
+}
+```
+
+The token `AV6E_2CDLJ9EQ` is alarming. There seems to be a non-speech sound
+happening and not much otherwise.
+
+In the absence of a principled cut off point, we will simply track whether the
+bandwidth of a token is in the top 10% of the distribution for F1, F2, and F3 
+bandwidths.
+
+The cut off values are:
+
+```{r}
+vowels %>% 
+  summarise(
+    F1_band = quantile(F1_band, 0.90),
+    F2_band = quantile(F2_band, 0.90),
+    F3_band = quantile(F3_band, 0.90)
+  )
+```
+
+We make three variables to track this. In order to keep good F1 readings, 
+even if the F2 reading is bad, we will separate our data into F1 and F2 datasets
+at the analysis stage. At that point, we will filter out the tokens with 
+high bandwidths. But it is important at this stage to quantify how many tokens
+will be lost. 
+
+```{r}
+vowels <- vowels %>% 
+  mutate(
+    high_f1_bandwidth = F1_band > quantile(F1_band, 0.90),
+    high_f2_bandwidth = F2_band > quantile(F2_band, 0.90),
+    high_f3_bandwidth = F3_band > quantile(F3_band, 0.90)
+  )
+
+f1_band_count <- nrow(filter(vowels, !high_f1_bandwidth))
+f2_band_count <- nrow(filter(vowels, !high_f2_bandwidth))
+
+# If these counts aren't the same, something has gone wrong!
+f1_band_count == f2_band_count
+```
+
+Since we are taking the top 10% of tokens, each of these variables 
+identifies `r nrow(filter(vowels, high_f1_bandwidth))` tokens.
+
+We remove very long tokens (with 2.5 standard deviations as our
+limit, within vowel)
+```{r}
+vowels <- vowels %>% 
+  mutate(
+    duration = end - start,
+  ) %>% 
+  group_by(vowel) %>% 
+  mutate(
+    duration_s = scale(duration)[,1]
+  ) %>% 
+  filter(
+    duration_s < 2.5
+  ) %>% 
+  ungroup()
+
+length_count <- nrow(vowels)
+```
+
+Phonetic research which deploys automated formant tracking often filters out
+tokens above or below 2.5 standard deviations from the mean _within speaker_. 
+This is not possible for us, as there are not enough tokens per speaker. The
+distribution of tokens for each speaker and collection point is as follows:
+
+```{r}
+vowels %>% 
+  group_by(participant, collect) %>% 
+  count(vowel) %>% 
+  ggplot(
+    aes(
+      x = n,
+      colour = vowel
+    )
+  ) +
+  geom_freqpoly(bins = 15)
+```
+
+Instead of taking each speaker individually, we will work out standard
+deviations within age bins.
+
+We use three month bins, starting from 46-48 months, and ending with 61 months
+and above.
+
+```{r}
+vowels <- vowels %>% 
+  mutate(
+    age_bin = case_when(
+      between(age, 46, 48) ~ "46-48",
+      between(age, 49, 51) ~ "49-51",
+      between(age, 52, 54) ~ "52-54",
+      between(age, 55, 57) ~ "55-57",
+      between(age, 58, 60) ~ "58-60",
+      between(age, 61, 70) ~ "61+"
+    ) 
+  )
+```
+
+We also track a standard deviation limit for a set of 'age bins'. 
+Because speakers
+do not have many tokens each, we apply sd filtering at the level of age bins. 
+We will use a cut off of 2 standard deviations.
+
+```{r}
+sd_var <- function(in_data, sd_limit = 2.5) {
+  vowels_all_summary <- in_data %>%
+    # Remove tokens at +/- sd limit (default 2.5 sd)
+    group_by(age_bin, vowel) %>%
+    summarise(
+      #calculate the summary statistics required for the outlier removal.
+      n = n(),
+      mean_F1_50 = mean(F1_50, na.rm = TRUE),
+      mean_F2_50 = mean(F2_50, na.rm = TRUE),
+      mean_F3_50 = mean(F3_50, na.rm = TRUE),
+      sd_F1_50 = sd(F1_50, na.rm = TRUE),
+      sd_F2_50 = sd(F2_50, na.rm = TRUE),
+      sd_F3_50 = sd(F3_50, na.rm = TRUE),
+      # Calculate cut off values.
+      max_F1_50 = mean(F1_50) + sd_limit*(sd(F1_50)),
+      min_F1_50 = mean(F1_50) - sd_limit*(sd(F1_50)),
+      max_F2_50 = mean(F2_50) + sd_limit*(sd(F2_50)),
+      min_F2_50 = mean(F2_50) - sd_limit*(sd(F2_50)),
+      max_F3_50 = mean(F3_50) + sd_limit*(sd(F3_50)),
+      min_F3_50 = mean(F3_50) - sd_limit*(sd(F3_50))
+    )
+
+  #this is the main outlier filtering step.
+  out_data <- in_data %>%
+    left_join(vowels_all_summary) %>%
+    mutate(
+      F1_outlier = ifelse(
+        F1_50 > min_F1_50 &
+          F1_50 < max_F1_50,
+        FALSE, 
+        TRUE
+      ),
+      F2_outlier = ifelse(
+        F2_50 > min_F2_50 &
+          F2_50 < max_F2_50, 
+        FALSE, 
+        TRUE
+      ),
+      F3_outlier = ifelse(
+        F3_50 > min_F3_50 &
+          F3_50 < max_F3_50, 
+        FALSE, 
+        TRUE
+      )
+    ) %>%
+    ungroup() %>% 
+    select(
+      -c(
+        "mean_F1_50", "mean_F2_50", "mean_F3_50",
+        "sd_F1_50", "sd_F2_50", "sd_F3_50",
+        "max_F1_50", "min_F1_50", 
+        "max_F2_50", "min_F2_50",
+        "max_F3_50", "min_F3_50"
+      )
+    )
+}
+```
+
+
+We apply the fucntion to generate the outlier columns.
+``` {r}
+vowels <- sd_var(vowels, sd_limit = 2)
+```
+
+We check that this function works by looking at the distribution of
+[dress]{.smallcaps} F1 in each age bin.
+```{r}
+vowels %>% 
+  filter(
+    vowel == "DRESS"
+  ) %>% 
+  ggplot(
+    aes(
+      x = F1_50,
+      fill = F1_outlier
+    )
+  ) +
+  geom_histogram() +
+  facet_grid(~ age_bin)
+```
+This looks about right. Most values identified appear on the right tail of the
+distributions.
+
+Now we look at F2:
+
+```{r}
+vowels %>% 
+  filter(
+    vowel == "DRESS"
+  ) %>% 
+  ggplot(
+    aes(
+      x = F2_50,
+      fill = F2_outlier
+    )
+  ) +
+  geom_histogram() +
+  facet_grid(~ age_bin)
+```
+
+Here, the identified values tend to be on the left tail of the distribution.
+
+We quantify how many outliers are identified. We also exclude high bandwidth
+tokens here, for the purpose of quantifying the filtering process below.
+
+```{r}
+f1_sd_count <- nrow(
+  vowels %>% 
+    filter(!high_f1_bandwidth, !F1_outlier)
+)
+
+f2_sd_count <- nrow(
+  vowels %>% 
+    filter(!high_f2_bandwidth, !F2_outlier)
+)
+
+f3_sd_count <- nrow(
+  vowels %>% 
+    filter(!high_f3_bandwidth, !F3_outlier)
+)
+```
+
+There are `r nrow(vowels) - f1_sd_count` F1 outliers detected, `r nrow(vowels) - f2_sd_count` F2 outliers,
+and `r nrow(vowels) - f3_sd_count` F3 outliers.
+
+We now track vowels with high F0. Sometimes, F0 sits on top of F1 and makes it
+hard to distinguish between the two.
+
+Let's look at the distribution of F0.
+
+```{r}
+vowels <- vowels %>% 
+  mutate(
+    meanPitch = as.numeric(meanPitch)
+  )
+
+vowels %>% 
+  select(
+    F1_50, F2_50, meanPitch
+  ) %>% 
+  pivot_longer(
+    cols = c("F1_50", "F2_50", "meanPitch"),
+    names_to = "type",
+    values_to = "value"
+  ) %>% 
+  ggplot(
+    aes(
+      x = value,
+      colour = type
+    )
+  ) +
+  geom_freqpoly()
+```
+
+As expected, there's a substantial overlap between the F0 and F1 distribution.
+
+We create a variable to track the top 10% of tokens by F0.^[We did not end up 
+using this variable in our analysis but it may be useful for post-hoc analysis 
+or model criticism.]
+```{r}
+vowels <- vowels %>% 
+  mutate(
+    high_pitch = meanPitch > quantile(vowels$meanPitch, 0.90, na.rm = T)
+  )
+```
+
+Finally, we filter out very extreme F1 values.
+
+```{r}
+vowels <- vowels %>% 
+  filter(F1_50 < 1500 & F1_50 > 350)
+
+extreme_count <- nrow(vowels)
+# 9289
+
+f1_extreme_count <- f1_sd_count - (na_count - extreme_count)
+f2_extreme_count <- f2_sd_count - (na_count - extreme_count)
+```
+
+We're left with `r nrow(vowels)` tokens.
+
+## Check Previously Identified Tokens
+
+We identified four tokens to check on in @sec-validation.
+
+```{r}
+vowels %>% 
+  filter(
+    file %in% c(
+    "UXX8_Z6244PSW_T4_ON_20211119_OA5SKD2NZQ__96.857-96.977.wav",
+		"ILA_T1_SX1LTCO7_SR_30072020__36.435-36.652.wav",
+		"AV6E_ZCBCIU5R_T1_ON_20210623_ZFICT8NP0J__103.079-103.159.wav",
+		"HAW_T2_FLAGGED_KXU13BOU_SR__61.462-61.595.wav"
+    )
+  ) %>% 
+  select(
+    transcript, participant, collect, F1_50, F2_50, noise, 
+    contains('outlier'), contains('band')
+  ) %>% 
+  knitr::kable() %>% 
+  scroll_box(width="100%")
+```
+
+The token `HAW_T2_FLAGGED_KXU13BOU_SR__61.462-61.595.wav` has
+been filtered out by one of the filtering steps above so there is no need to 
+check.
+
+`ILA_T1_SX1LTCO7_SR_30072020.slt` and 
+`AV6E_ZCBCIU5R_T1_ON_20210623_ZFICT8NP0J.slt` have been correctly identified
+as having very high F2 bandwidth. 
+
+The token `UXX8_Z6244PSW_T4_ON_20211119_OA5SKD2NZQ__96.857-96.977.wav` has
+correctly been shifted up in F2 from the FastTrack defaults 
+(see @sec-validation).
+
+# Interim Data Description {#sec-data-desc} 
+
+We now give a description of the data before normalisation.
+
+## Vowel Space
+
+First, a simple vowel space plot:
+
+```{r}
+#| label: fig-post-filt
+#| fig.cap: |
+#|   Vowel space after data filtering.
+vowels %>% 
+  relocate(
+    participant, vowel, F1_50, F2_50
+  ) %>% 
+  plot_vowel_space(
+    vowel_colours = vowel_colours,
+    means_only=FALSE, 
+    facet=FALSE, 
+    ellipse=TRUE, 
+    point_alpha=0.2
+  ) +
+  labs(
+    title = "Raw Formant Values After Filtering"
+  )
+```
+
+How many tokens do we have for each of these vowels?
+```{r}
+vowels %>% 
+  count(vowel) %>% 
+  arrange(desc(n)) %>% 
+  knitr::kable() 
+```
+
+
+## Participant Level Summary
+
+We have `r length(unique(vowels$participant))` participants.
+
+How many collections points do the participants have?
+``` {r}
+participants_collect <- vowels %>%
+  group_by(participant) %>% 
+  summarise(
+    collection_points = n_distinct(collect)
+  ) %>% 
+  group_by(collection_points) %>% 
+  summarise(n_participants = n())
+
+participants_collect %>% 
+  knitr::kable()
+```
+
+We have `r participants_collect$n_participants[[3]]` participants at 3 collection points, 
+with almost none at 4 collection points, and `r participants_collect$n_participants[[1]]` and 
+`r participants_collect$n_participants[[2]]` each at collection points 1 and 2.
+
+The youngest speaker in our data is `r signif(min(vowels$age)/12, 2)` years 
+old, and the oldest is `r signif(max(vowels$age)/12, 2)`, with a range
+of `r range(vowels$age)[2] - range(vowels$age)[1]`
+months.
+
+We look at the gender balance by participant and by token.
+
+``` {r fig-part-gender, fig.cap = "Participants by gender."}
+participants_data <- vowels %>% 
+  group_by(participant) %>%
+  summarise(
+    gender = first(gender),
+    ethnicity = first(ethnicity),
+    home_language = first(home_language),
+    dob = first(dob)
+  )
+
+participants_data %>% 
+  ggplot(
+    aes(
+      x = gender
+    )
+  ) +
+  geom_histogram(stat="count") +
+  labs(title = "Participants by gender", x = "Gender")
+```
+
+There are `r nrow(participants_data %>% filter(gender == "F"))` 
+female and `r nrow(participants_data %>% filter(gender == "M"))` 
+male speakers.
+
+At the level of tokens, the gender balance is:
+``` {r token-gender, fig.cap = "Tokens by gender."}
+vowels %>% 
+  ggplot(
+    aes(
+      x = gender
+    )
+  ) +
+  geom_histogram(stat="count") +
+  labs(title = "Tokens by gender", x = "Gender")
+```
+
+At the token level, there are slightly more available from female speakers 
+than male.
+
+We also have ethnicity and home language information.
+``` {r fig-part-ethnicity, fig.cap = "Participant ethnicity"}
+participants_data %>% 
+  ggplot(
+    aes(
+      x = ethnicity
+    )
+  ) +
+  geom_histogram(stat="count") +
+  labs(title = "Participants by ethnicity", x = "Ethnicity")
+```
+
+Dominance by NZ Europeans. Not too surprising given the demographics of 
+Christchurch, New Zealand.
+
+``` {r fig-part-language, fig.cap = "Participant home languages"}
+participants_data %>% 
+  ggplot(
+    aes(
+      x = home_language
+    )
+  ) +
+  geom_histogram(stat="count") +
+  labs(title = "Participants by home language", x = "Home language") +
+  theme(
+    axis.text.x = element_text(angle = 90)
+  )
+```
+
+We decided above to filter by English being one of the particpiants home 
+languages.
+
+Finally, the distribution of birth dates:
+``` {r fig-participant-birthdays, fig.cap = "Participants by date of birth."}
+participants_data %>% 
+  mutate(
+    month_year = ym(str_sub(dob, start = 1L, end = -4L))
+  ) %>% 
+  ggplot(
+    aes(
+      x = month_year
+    )
+  ) +
+  geom_histogram(stat="count") +
+  labs(title = "Participants by date of birth", x = "Birth date") +
+  theme(
+    axis.text.x = element_text(angle = 90)
+  )
+```
+
+## Centre Level Summary
+
+How is our data distributed across centres?
+
+``` {r}
+centres_data <- vowels %>% 
+  group_by(transcript_centre) %>% 
+  summarise(tokens=n(), participants = n_distinct(participant)) %>% 
+  arrange(desc(participants))
+centres_data %>% 
+  knitr::kable()
+```
+
+We have `r nrow(centres_data %>% filter(participants >= 10))` centres with 10 
+or more participants and `r nrow(centres_data)` centres overall.
+
+We can depict this:
+``` {r fig-centres-token}
+#| fig-cap: "Centres by token."
+centres_data %>% 
+  ggplot(
+    aes(
+      x = transcript_centre,
+      y = tokens
+    )
+  ) +
+  geom_col() +
+  labs(x = "Centre")
+```
+
+``` {r fig-centres-participant}
+#| fig-cap: "Centres by participants."
+centres_data %>% 
+  ggplot(
+    aes(
+      x = transcript_centre,
+      y = participants
+    )
+  ) +
+  geom_col() +
+  labs(x = "Centre")
+```
+
+## Tables
+
+How many tokens are stopwords or unstressed?
+
+```{r}
+vowels %>% 
+  count(stopword) %>%
+  knitr::kable()
+```
+
+Unstressed?
+
+```{r}
+vowels %>% 
+  count(stressed) %>% 
+  knitr::kable()
+```
+
+What range of ethnicity identifications?
+```{r}
+participants_data %>% 
+  count(ethnicity) %>% 
+  knitr::kable()
+```
+
+When were the participants born?
+```{r}
+participants_data %>% 
+  pull(dob) %>% 
+  ymd() %>% 
+  summary()
+```
+
+What about the distribution of ages at collection point?
+```{r}
+pc_data <- vowels %>% 
+  group_by(participant, collect) %>%
+  summarise(
+    gender = first(gender),
+    ethnicity = first(ethnicity),
+    home_language = first(home_language),
+    dob = first(dob),
+    age = first(age)
+  )
+
+pc_data %>% 
+  pull(age) %>% 
+  summary()
+```
+
+
+### Data density
+
+In the paper, we make claims about the difference in the 'density' of the
+transcripts. i.e., we talk about the difference in the number of
+tokens-per-minute in adult speech (in this case, QuakeBox data shared via the
+`nzilbb.labbcat` function) and child speech.
+
+First, what is the range of tokens-per-minute in the (adult) QuakeBox corpus?
+
+```{r}
+qb_vowels %>% 
+  group_by(
+    speaker
+  ) %>% 
+  summarise(
+    duration = max(time) / 60,
+    tokens = n()
+  ) %>% 
+  mutate(
+    tokens_per_minute = tokens / duration
+  ) %>% 
+  pull(tokens_per_minute) %>% 
+  summary()
+```
+
+What is the range of tokens per minute in our preschool corpus?
+```{r}
+vowels %>% 
+  group_by(
+    participant, collect
+  ) %>% 
+  summarise(
+    duration = max(start) / 60,
+    tokens = n(),
+    .groups = "keep"
+  ) %>% 
+  mutate(
+    tokens_per_minute = tokens / duration
+  ) %>% 
+  pull(tokens_per_minute) %>% 
+  summary()
+```
+
+## Filtering Flow Chart
+
+``` {r}
+#| label: fig-filtering-flow
+#| fig.cap: "Data filtering flow chart."
+#| fig.height: 10
+# Flow chart generated using the DiagrammeR package.
+flow_chart <- mermaid(
+  diagram = glue("
+  graph TB
+  
+  A(Extract data from LaBB-CAT: {initial_count} tokens) --> 
+  B(Home language: {language_count} tokens)
+  B --> C(FOOT, SCHWA and HANA: {word_count} tokens)
+  C --> D(Hesitations, and missing words: {na_word_count} tokens)
+  D --> E(Preceeding liquids: {liquid_count} tokens)
+  E --> F(FastTrack errors: {na_count} tokens)
+  F --> Q(Noisy tokens: {noise_count} tokens)
+  Q --> M(Long tokens: {length_count} tokens)
+  M --> G(F1: high bandwidth: {f1_band_count} tokens)
+  M --> H(F2: high bandwidth: {f2_band_count} tokens)
+  G --> I(F1: SD filter: {f1_sd_count} tokens)
+  H --> J(F2: SD filter: {f2_sd_count} tokens)
+  I --> K(F1: extremes: {f1_extreme_count} tokens)
+  J --> L(F2: extremes: {f2_extreme_count} tokens)
+  "),
+  width = 800
+)
+
+flow_chart
+```
+
+
+# Normalisation
+
+We investigated multiple normalisation methods. The two used in the paper are
+Lobanov 2.0 on the full vowel space _with imputation_ and Lobanov 2.0 on a 
+subset of the data which allowed normalisation _without imputation_.
+
+We also investigated the use of two log-mean approaches. We do not use these in
+the paper, but add them to these supplementary materials as they may be useful
+for other researchers.
+
+## Lobanov 2.0 (top 5 vowels)
+
+Lobanov 2.0 requires us to estimate means for each vowel type and a standard
+deviation. In Brand et al. 2021, 5 tokens per 
+category are required. We don't have sufficient data for 
+that for most speakers.
+
+The following function calculates the data loss associated with different 
+filtering strategies for applying Lobanov 2.0. We take then top $n$ vowel 
+types by frequency and work out how much data remains. We require at least
+3 tokens for each vowel type.
+
+Note that this filtering takes place at the level of data _collections_. 
+That is, we filter out a data collection point if it does not have enough
+data. This is because we have to normalise data collection points separately. 
+
+```{r}
+lob_counts <- tibble(
+  vowel_types = seq(11, 1, -1)
+)
+
+get_lob_count <- function(vowel_types, in_data) {
+  
+  in_data <- in_data %>% 
+    mutate(
+      pc = paste0(participant, '-', collect)
+    ) 
+  
+  type_counts <- in_data %>% 
+    count(vowel) %>% 
+    arrange(desc(n))
+  
+  top_n_vowels <- type_counts %>% 
+    slice_head(n=vowel_types) %>% 
+    pull(vowel)
+  
+  pcs_to_filter <- in_data %>% 
+    filter(vowel %in% top_n_vowels) %>% 
+    mutate(vowel = droplevels(vowel)) %>% 
+    group_by(pc, vowel, .drop=FALSE) %>% 
+    summarise(
+      type_count = n(),
+      .groups = "drop_last"
+    ) %>% 
+    ungroup() %>% 
+    group_by(pc) %>% 
+    mutate(
+      min_count = min(type_count)
+    ) %>% 
+    filter(
+      min_count < 3
+    ) %>% 
+    pull(pc) %>% 
+    unique()
+  
+  filtered_data <- in_data %>%
+    filter(
+      vowel %in% top_n_vowels,
+      !pc %in% pcs_to_filter
+    ) %>% 
+    select(-pc)
+  
+  speaker_count = length(unique(filtered_data$participant))
+  token_count = nrow(filtered_data)
+  
+  out_list <- list(speakers = speaker_count, tokens = token_count)
+}
+
+lob_counts <- lob_counts %>% 
+  mutate(
+    counts = map(vowel_types, ~ get_lob_count(.x, vowels))
+  ) %>% 
+  unnest_wider(counts)
+```
+
+The results can be visualised in two ways. First, how many speakers are left?
+```{r}
+#| label: fig-remaining-speakers
+#| fig.cap: |
+#|   Speakers remaining in data set as we increase the number of included vowel
+#|   types.
+lob_counts %>% 
+  ggplot(
+    aes(
+      x = vowel_types,
+      y = speakers
+    )
+  ) +
+  geom_col() +
+  labs(
+    title = "Speakers with sufficient data for Lobanov 2.0",
+    y = "Speakers",
+    x = "Top n vowel types"
+  )
+```
+We see from @fig-remaining-speakers that if we insisted on 11 vowels we would
+have 1 speaker remaining.
+
+Second, we quantify the _tokens_ remaining if we insist on different numbers of
+vowel types.
+
+```{r}
+#| label: fig-remaining-tokens
+#| fig.cap: |
+#|   Vowel tokens remaining in data set as we increase the number of included vowel
+#|   types.
+lob_counts %>% 
+  ggplot(
+    aes(
+      x = vowel_types,
+      y = tokens
+    )
+  ) +
+  geom_col() +
+  labs(
+    title = "Token counts for Lobanov 2.0 with top-n vowels",
+    x = "Top n vowels",
+    y = "Tokens"
+  )
+```
+
+Tokens are maximised if we only take the _five_ most frequent vowel types! In
+that case, we would be down to sixty-one speakers and 1000 tokens. The five types
+are [kit]{.smallcaps}, [fleece]{.smallcaps}, [strut]{.smallcaps}, 
+[dress]{.smallcaps}, and [trap]{.smallcaps}.
+
+```{r}
+vowels %>% 
+  count(vowel) %>% 
+  arrange(desc(n)) %>% 
+  knitr::kable()
+```
+
+We will make a subset of the data and apply Lobanov 2.0 normalisation to it
+in the usual fashion. This will be used later as a check to ensure we are not 
+being led astray by the imputation approach we will use for the main analysis.
+
+```{r}
+# 'pc' is short for 'participant_collect'. We want to control for growth, so
+# we're normalising separately for each collection point.
+pcs_to_filter <- vowels %>% 
+  filter(
+    vowel %in% c('KIT', 'STRUT', 'DRESS', 'FLEECE', 'TRAP')
+  ) %>% 
+  mutate(
+    vowel = droplevels(vowel),
+    pc = paste0(participant, '-', collect)
+  ) %>% 
+  group_by(pc, vowel, .drop=FALSE) %>% 
+  summarise(
+    type_count = n()
+  ) %>% 
+  ungroup() %>% 
+  group_by(pc) %>% 
+  mutate(
+    min_count = min(type_count)
+  ) %>% 
+  filter(
+    min_count < 3
+  ) %>%
+  pull(pc) %>% 
+  unique()
+  
+lob2_sub_vowels <- vowels %>%   
+  filter(
+    vowel %in% c('KIT', 'STRUT', 'DRESS', 'FLEECE', 'TRAP')
+  ) %>% 
+  mutate(
+    vowel = droplevels(vowel),
+    pc = paste0(participant, '-', collect)   
+  ) %>% 
+  filter(!pc %in% pcs_to_filter) %>% 
+  ungroup() %>% 
+  relocate(participant, vowel, F1_50, F2_50) %>% 
+  lobanov_2()  
+```
+
+We visualise the subset.
+```{r}
+#| label: fig-lob2-sub-vowels
+#| fig.cap: |
+#|   Lobanov 2.0 vowels (top-5 vowel types).
+lob2_sub_vowels %>% 
+  relocate(
+    participant, vowel, F1_lob2, F2_lob2
+  ) %>% 
+  plot_vowel_space(
+    vowel_colours = vowel_colours,
+    means_only=FALSE, 
+    facet=FALSE, 
+    ellipse=TRUE, 
+    point_alpha=0.1
+  )
+```
+
+We have some extreme values normalised values here. 
+This is unsurprising given we are taking means across a low number of tokens.
+
+## Single-parameter log-mean normalisation
+
+A nice normalisation method in cases of missing data is the regression approach
+outlined by [@barreda2018regression].
+
+We implement it here:
+```{r}
+# Assume that data has F1 and F2 as separate columns.  (i.e. in the wider form)
+logmean_regression <- function(in_data) {
+  regression_data <- in_data %>% 
+    select(participant, vowel, F1_50, F2_50) %>% 
+    pivot_longer(
+      cols = c('F1_50', 'F2_50'), 
+      names_to = "formant", 
+      values_to="value"
+    ) %>% 
+    mutate(
+      vowel_formant = as.factor(paste0(vowel, '_', formant)),
+      participant = as.factor(participant),
+      log_value = log(value)
+    )
+  
+  regression_model <- lm(
+    log_value ~ 0 + participant + vowel_formant, 
+    data = regression_data,
+    contrasts = list(vowel_formant = contr.sum)
+  )
+  
+  norm_values <- as_tibble(
+    dummy.coef(regression_model)$participant, 
+    rownames = "participant"
+  )
+  
+  normalised_data <- regression_data %>% 
+    left_join(norm_values %>% rename(speaker_value = value)) %>% 
+    mutate(
+      norm_value = log_value - speaker_value
+    ) %>% 
+    select(participant, norm_value, formant, vowel) %>% 
+    mutate(
+      id = rep(seq(1, (nrow(regression_data)/2)), each=2)
+    ) %>% 
+    pivot_wider(
+      names_from = formant,
+      values_from = c("norm_value")
+    )%>% 
+    rename(
+        F1_logmean = F1_50,
+        F2_logmean = F2_50
+    )
+  
+  out_data <- bind_cols(
+    in_data, 
+    normalised_data %>% select(F1_logmean, F2_logmean)
+  )
+}
+
+# This code makes the 'participant' column distinguish between recording
+# sessions (i.e., each recording session is normalised separately).
+logmean_vowels <- vowels %>% 
+  mutate(
+    participant_original = participant,
+    participant = paste0(participant, '_', collect)
+  ) %>% 
+  logmean_regression()
+
+# Single value log-mean normalisation relies on a single value to scale
+# formants for each speaker. This is, roughly speaking, a way of capturing
+# vocal tract length difference.
+speaker_values <- function(in_data) {
+  regression_data <- in_data %>% 
+    select(participant, vowel, F1_50, F2_50) %>% 
+    pivot_longer(
+      cols = c('F1_50', 'F2_50'), 
+      names_to = "formant", 
+      values_to="value"
+    ) %>% 
+    mutate(
+      vowel_formant = as.factor(paste0(vowel, '_', formant)),
+      participant = as.factor(participant),
+      log_value = log(value)
+    )
+  
+  regression_model <- lm(
+    log_value ~ 0 + participant + vowel_formant, 
+    data = regression_data,
+    contrasts = list(vowel_formant = contr.sum)
+  )
+  
+  norm_values <- as_tibble(
+    dummy.coef(regression_model)$participant, 
+    rownames = "participant"
+  )
+}
+
+speaks <- speaker_values(vowels)
+```
+
+We can look at the distribution of 'speaker values'. These are the values which
+are used to scale each speakers vowel space. The underlying idea of this 
+method of normalisation is that, as a model of perception, it is plausible that
+we normalise by estimating a single scaling factor for each speaker.
+
+```{r}
+#| label: fig-scaling-values
+#| fig.cap: |
+#|   Values by which speakers are scaled in single-parameter log-mean 
+#|   normalisation. The x axis depicts the number of tokens for each speaker,
+#|   and shows a tightening of variation in the scaling factors as token counts
+#|   increase.
+speak_data <- vowels %>% 
+  group_by(participant) %>% 
+  summarise(
+    n = n(),
+    age = first(age)
+  ) %>% 
+  left_join(speaks)
+
+speak_data %>% 
+  ggplot(
+    aes(
+      x = n,
+      y = value,
+      colour = age
+    )
+  ) +
+  geom_point()
+```
+
+Stability seems to increase with data here. This leads to a worry that we don't
+even have enough data for this low-data approach! However, given there is only
+a handful of 200+ token speakers, it might just be chance that all
+have values around $7.1$.
+
+```{r}
+#| label: fig-logmean-vowels
+#| fig.cap: |
+#|   Single-parameter log-mean vowel space.
+logmean_vowels %>% 
+  relocate(
+    participant, vowel, F1_logmean, F2_logmean
+  ) %>% 
+  plot_vowel_space(
+    vowel_colours = vowel_colours,
+    means_only = FALSE,
+    ellipses = TRUE,
+    facet = FALSE
+  )
+```
+
+A bigger concern: we know that there are features of 
+children and adult production that are likely to affect one formant more than 
+the other. Single value normalisation is designed to avoid normalising such
+features! So we explore Lobanov 2.0 with
+imputed values and two-parameter log-mean normalisation.
+
+## Two-parameter log-mean
+
+We do the same as the above, but treat F1 and F2 individually.
+
+```{r}
+# Assume that data has F1 and F2 as separate columns.  (i.e. in the wider form)
+dual_logmean_regression <- function(in_data) {
+  regression_data <- in_data %>% 
+    select(participant, vowel, F1_50, F2_50) %>% 
+    pivot_longer(
+      cols = c('F1_50', 'F2_50'), 
+      names_to = "formant", 
+      values_to="value"
+    ) %>% 
+    mutate(
+      participant = as.factor(participant),
+      log_value = log(value)
+    )
+  
+  speaker_values <- regression_data %>% 
+    ungroup() %>% 
+    group_by(formant) %>% 
+    nest() %>% 
+    mutate(
+      lm_fit = map(
+        data, 
+        ~ lm(
+          log_value ~ 0 + participant + vowel,
+          data = .x,
+          contrasts = list(vowel = contr.sum)
+          )
+      ),
+      norm_values = map(
+        lm_fit,
+        ~ as_tibble(
+          dummy.coef(.x)$participant,
+          rownames = "participant"
+        )
+      )
+    ) %>% 
+    select(formant, norm_values) %>% 
+    unnest(norm_values)
+  
+  normalised_data <- regression_data %>% 
+    left_join(speaker_values %>% rename(speaker_value = value)) %>% 
+    mutate(
+      norm_value = log_value - speaker_value
+    ) %>% 
+    select(participant, norm_value, formant, vowel) %>% 
+    mutate(
+      id = rep(seq(1, (nrow(regression_data)/2)), each=2)
+    ) %>% 
+    pivot_wider(
+      names_from = formant,
+      values_from = c("norm_value")
+    )%>% 
+    rename(
+        F1_logmean = F1_50,
+        F2_logmean = F2_50
+    )
+  
+  out_data <- bind_cols(
+    in_data, 
+    normalised_data %>% select(F1_logmean, F2_logmean)
+  )
+}
+
+dual_logmean_vowels <- vowels %>% 
+  mutate(
+    participant_original = participant,
+    participant = paste0(participant, '_', collect)
+  ) %>% 
+  dual_logmean_regression()
+```
+
+Let's look:
+```{r}
+#| label: fig-logmean-2par-vowels
+#| fig.cap: |
+#|   Two-parameter log-mean vowel space.
+dual_logmean_vowels %>% 
+  relocate(
+    participant, vowel, F1_logmean, F2_logmean
+  ) %>% 
+  plot_vowel_space(
+    vowel_colours = vowel_colours,
+    means_only = FALSE,
+    ellipses = TRUE,
+    facet = FALSE,
+    label_size = 3,
+    point_alpha = 0.05
+  )
+```
+This may be of use to us as an alternative to imputation. Our next step is to
+modify Lobanov 2.0 by allowing imputation.
+
+## Lobanov with Imputation {#sec-lob2}
+
+We can impute values before we normalise, as in Wilson Black et al. (2023). In
+that paper, imputation occurred within intervals of a speaker's monologue. So we
+could impute the mean value _for the speaker as a whole_ for a given vowel type.
+We have to think carefully about what the best value to impute for speakers in
+the absence of source from the same speaker and collection point. The basic
+principle is to avoid biasing the analysis towards positive results and to
+quantify what we have done and how many data points are affected by
+normalisation in order to qualify our later conclusions.
+
+Do we need a minimum data amount in order to include a speaker? A sense of the
+distribution of token counts for each speaker and collection point will be 
+useful here.
+
+```{r}
+#| label: fig-token-per-vowel-pc
+#| fig.cap: |
+#|  Distributions of token counts for each vowel type across participants and
+#|  collection points.
+vowels %>%
+  count(participant, collect, vowel) %>% 
+  ggplot(
+    aes(
+      x = n,
+      colour = vowel
+    )
+  ) +
+  geom_freqpoly(stat="density") +
+  scale_colour_manual(values = vowel_colours)
+```
+It's really hard to decide on a cut off value here.
+
+Consequently, we look the other way. That is, we impute for _everyone_ then
+filter depending on how many data points we impute for a given speaker.
+
+To start, we want counts for each participant, collect, vowel combination
+*including* missing vowels.
+
+
+```{r}
+pcv_counts <- vowels %>% 
+  count(participant, collect, vowel, .drop = FALSE)
+```
+
+How many 0's?
+
+```{r}
+token_counts <- pcv_counts %>% 
+  count(n)
+
+token_counts %>% 
+  rename(
+    Tokens = n,
+    `Participant collection points` = nn
+  ) %>% 
+  knitr::kable()
+```
+This is a lot of situations in which a speaker has no tokens of a given vowel at
+a collection point.
+
+What percentage of data points am I proposing to impute if all vowels and 
+collection points are topped up to 3 tokens?
+```{r}
+to_impute = sum(token_counts$nn[1:3])/nrow(vowels) * 100
+to_impute
+```
+An additional `r round(to_impute, 2)`%. However, it is worth noting that these
+imputed values will not be present in the resulting dataset (because they are
+deleted after normalisation). That is, they are used to normalise the actual
+readings, rather than to generate new readings.
+
+In any case, we have an answer to _when_ to impute: if the number of tokens of a
+given vowel for a participant collection point is fewer than 3.
+
+But _what_ will we impute? Here, one obvious answer is a mean value from
+children sufficiently close in age at a given collection point. What is
+sufficiently close? We initially tried to take those children 
+born within 3 months (i.e. their age in months and
+one months either side) of the child we are normalising. However, we found this
+to be quite unstable. Instead, we impute from linear models
+for each vowel-formant pair, with age and gender (not in interaction) as our 
+predictors.
+
+```{r, eval=T}
+vowel_models <- vowels %>% 
+  ungroup() %>% 
+  pivot_longer(
+    cols = contains('_50'),
+    names_to = "formant",
+    values_to = "formant_value"
+  ) %>% 
+  group_by(vowel, formant) %>% 
+  nest() %>% 
+  mutate(
+    lm_fit = map(data, ~ lm(formant_value ~ age + gender, data=.x))
+  )
+```
+
+
+What do these models look like? Let's get predictions for each age and gender.
+
+```{r, eval=T}
+ages <- seq(min(vowels$age), max(vowels$age))
+
+to_predict <- tibble(
+  gender = rep(c("M", "F"), each = length(ages)),
+  age = rep(ages, times = 2)
+)
+
+# This function just adds the predictions to the tibble of the variables to be
+# predicted
+get_predictions <- function(model, to_predict) {
+  predictions <- to_predict %>% 
+    mutate(
+      fit = predict(model, newdata = to_predict)
+    )
+}
+
+vowel_models <- vowel_models %>% 
+  mutate(
+    predictions = map(lm_fit, ~ get_predictions(.x, to_predict))
+  )
+
+vowel_predictions <- vowel_models %>% 
+  select(vowel, formant, predictions) %>% 
+  unnest(predictions)
+
+vowel_predictions
+```
+
+Let's visualise (without any indication of error). 
+```{r}
+#| label: fig-imputation-models
+#| fig.cap: |
+#|   Models used to imputed values for normalisation.
+vowel_predictions %>% 
+  filter(
+    !formant == "F3_50"
+  ) %>% 
+  ggplot(
+    aes(
+      x = age,
+      y = fit,
+      colour = vowel
+    )
+  ) +
+  geom_line() + 
+  scale_colour_manual(values = vowel_colours) +
+  facet_grid(
+    cols = vars(gender),
+    rows = vars(formant),
+    scales = "free"
+  ) +
+  labs(
+    title = "Imputation models",
+    x = "Age (months)",
+    y = "Predicted formant frequency"
+  )
+```
+
+We now have values for imputation. We could begin to peer at the results
+of these models now, but we will resist until later stages. There is not 
+enough being controlled yet.
+
+The next step is to get the additional rows of data we need for each speaker.
+We can then add these rows to their non-imputed data with `bind_rows()` and then
+apply the `lobanov_2()` function from the `nzilbb.vowels` package.
+
+***NB:*** we can't directly compare these values to the Lobanov 2.0 top-5-vowels 
+results because the vowel inventory is different. If it were possible to compare
+the top-5 results with a full complement of vowels we wouldn't have had to go 
+through this whole imputation process.
+
+It will be convenient to widen the predictions.
+```{r}
+vowel_predictions <- vowel_predictions %>% 
+  pivot_wider(
+    names_from = 'formant',
+    values_from = 'fit'
+  )
+```
+
+```{r}
+get_additional_rows <- function(
+    speaker_data, 
+    vowel_predictions,
+    cutoff = 3
+  ) {
+  
+  # assume speaker_data is for a single collection point, so there is one
+  # age and gender.
+  age <- speaker_data$age[[1]]
+  gender <- speaker_data$gender[[1]]
+  
+  filtered_predictions <- vowel_predictions %>% 
+    filter(
+      age == age,
+      gender == gender
+    )
+  
+  # Find the low-n rows
+  to_impute <- speaker_data %>% 
+  count(vowel, .drop=FALSE) %>% 
+  filter(
+    n < cutoff
+  )
+  
+  # generate new rows with imputed mean values to get up to 3 total for
+  # each vowel type.
+  out_data <- to_impute %>% 
+    mutate(
+      additional_rows = map2(
+        vowel,
+        (3-n),
+        ~ tibble(
+          vowel = rep(.x, .y),
+          F1_50 = rep(
+            filtered_predictions %>% 
+              filter(vowel == .x) %>% 
+              pull(F1_50) %>% 
+              pluck(1),
+            .y
+          ),
+          F2_50 = rep(
+            filtered_predictions %>% 
+              filter(vowel == .x) %>% 
+              pull(F2_50) %>% 
+              pluck(1),
+            .y
+          )
+        )
+      )
+    ) %>% 
+    select(additional_rows) %>% 
+    unnest(additional_rows) %>% 
+    # Use MatchId column to track which data points have been imputed
+    mutate(
+      MatchId = "Imputed"
+    )
+}
+```
+
+Let's test the function on a particular speaker at a particular collection
+point.
+
+```{r}
+#| label: fig-test-speaker
+#| fig.cap: |
+#|   Vowel space for a particular speaker at one collection point (no imputation).
+test_speaker_data <- vowels %>% 
+  filter(
+    # a random participant
+    participant == vowels$participant[[
+      floor(runif(1, min = 1, max = nrow(vowels)))
+    ]]
+  )
+
+# ensure a single collect
+test_speaker_data <- test_speaker_data %>% 
+  filter(
+    collect == first(collect)
+  )
+
+age <- test_speaker_data$age[[1]]
+gender <- test_speaker_data$gender[[1]]
+
+additional_rows <- get_additional_rows(
+  test_speaker_data,
+  vowel_predictions
+)
+
+test_speaker_data %>% 
+  relocate(
+    participant, vowel, F1_50, F2_50
+  ) %>% 
+  plot_vowel_space(
+    means_only = FALSE,
+    point_alpha = 1
+  )
+
+additional_rows %>% 
+  knitr::kable()
+```
+
+The values in the table are the four values which will be imputed for this
+speaker. The values are plausible. Rerunning the cell lets you look at multiple
+participant-collects and their vowel data. If there is no point in the plot,
+then there are three in the additional rows, etc.
+
+We can now generate Lobanov 2.0 values for each speaker.
+```{r}
+lob2_imputed_values <- vowels %>% 
+  ungroup() %>% 
+  group_by(participant, collect) %>% 
+  nest() %>% 
+  mutate(
+    additional_rows = map(
+      data,
+      ~ get_additional_rows(
+        .x,
+        vowel_predictions
+      )
+    ),
+    imputed_data = map2(
+      data,
+      additional_rows,
+      ~ .x %>% 
+        select(vowel, F1_50, F2_50, MatchId) %>% 
+        bind_rows(.y)
+    )
+  ) %>% 
+  ungroup() %>% 
+  select(
+    participant, collect, imputed_data
+  ) %>%
+  unnest(imputed_data) %>% 
+  mutate(
+    pc = paste0(participant, '-', collect)
+  ) %>% 
+  relocate(
+    pc, vowel, F1_50, F2_50
+  ) %>% 
+  lobanov_2()
+```
+
+We now join these with the original data by `MatchId` to remove the imputed
+data points. But first, we collect relevant counts of imputed values for 
+each `pc` (i.e. each participant-collect combination).
+
+```{r}
+# Want to know if any pcs have _no_ imputation (unlikely)
+pcs_with_data <- vowels %>% 
+  select(participant, collect) %>% 
+  mutate(
+    pc = str_c(participant, collect, sep = '-')
+  ) %>% 
+  pull(pc) %>% 
+  unique()
+
+imputation_counts <- lob2_imputed_values %>% 
+  mutate(
+    participant = as.factor(participant),
+    collect = as.factor(collect)
+  ) %>% 
+  filter(
+    MatchId == "Imputed"
+  ) %>% 
+  group_by(participant, collect, .drop = FALSE) %>% 
+  summarise(
+    n_vowels = n_distinct(vowel),
+    n_tokens = n()
+  ) %>% 
+  mutate(
+    pc = str_c(participant, collect, sep = '-')
+  ) %>% 
+  filter(
+    pc %in% pcs_with_data
+  )
+```
+
+How many imputed tokens? Let's visualise.
+```{r}
+#| label: fig-dist-imputation
+#| fig.cap: |
+#|   Distribution of counts of tokens imputed for each speaker.
+imputation_counts %>% 
+  ggplot(
+    aes(
+      x = n_tokens
+    )
+  ) +
+  geom_histogram(bins = 30) +
+  labs(
+    title = "Distributions of counts of tokens imputed",
+    x = "Tokens imputed",
+    y = "Collection points"
+  )
+```
+
+How many imputed vowel types?
+```{r}
+#| label: fig-dist-imputation-types
+#| fig.cap: |
+#|   Distribution of counts of vowel types imputed for each speaker.
+imputation_counts %>% 
+  ggplot(
+    aes(
+      x = n_vowels
+    )
+  ) +
+  geom_histogram(bins = 11) +
+  labs(
+    title = "Distributions of counts of vowel types imputed",
+    x = "Vowel types imputed",
+    y = "Collection points"
+  ) +
+  scale_x_continuous(breaks=seq(1,10))
+```
+
+This is a lot of imputation. In the absence of a clear cut off point, we remove
+any collection points in which there are more than 20 imputed tokens. This would
+imply only a single token in each category at a given collection point.
+
+```{r}
+to_remove <- imputation_counts %>% 
+  filter(
+    n_tokens > 20
+  ) %>% 
+  mutate(
+    pc = str_c(participant, collect)
+  )
+
+lob2_imputed <- vowels %>% 
+  left_join(
+    lob2_imputed_values %>% 
+      select(
+        MatchId, F1_lob2, F2_lob2
+      )
+  ) %>% 
+  mutate(
+    pc = str_c(participant, collect)
+  ) %>% 
+  filter(
+    !(pc %in% to_remove$pc)
+  ) %>% 
+  select(-pc)
+```
+
+We remove `r nrow(to_remove)` recordings.
+
+Let's have a look at the resulting data set.
+```{r}
+#| label: fig-lob2-vs
+#| fig.cap: |
+#|   Tokens after Lobanov 2.0 normalisation with imputation.
+lob2_imputed %>% 
+  relocate(
+    participant, vowel, F1_lob2, F2_lob2
+  ) %>% 
+  plot_vowel_space(
+    vowel_colours = vowel_colours,
+    means_only = FALSE,
+    ellipses = TRUE,
+    facet = FALSE,
+    point_alpha = 0.05
+  )
+```
+
+# Merge and Export Data
+
+We merge the data together so that all normalisation methods are within the
+same data frame.
+
+```{r}
+processed_vowels <- vowels %>% 
+  left_join(
+    lob2_imputed %>% 
+      select(MatchId, F1_lob2, F2_lob2)
+  ) %>% 
+  left_join(
+    lob2_sub_vowels %>% 
+      select(MatchId, F1_lob2, F2_lob2) %>% 
+      rename(
+        F1_sub = F1_lob2,
+        F2_sub = F2_lob2
+      )
+  ) %>% 
+  left_join(
+    logmean_vowels %>% 
+      select(MatchId, F1_logmean, F2_logmean) %>% 
+      rename(
+        F1_logmean1 = F1_logmean,
+        F2_logmean1 = F2_logmean
+      )
+  ) %>% 
+  left_join(
+    dual_logmean_vowels %>% 
+      select(MatchId, F1_logmean, F2_logmean) %>% 
+      rename(
+        F1_logmean2 = F1_logmean,
+        F2_logmean2 = F2_logmean
+      )
+  )
+```
+
+One last check. Now that we have all the data together, we can see how closely
+correlated the results of the normalisation methods are.
+
+```{r}
+norm_values <- processed_vowels %>% 
+  select(-F1, -F2) %>% 
+  select(
+    MatchId, matches('F[1-2]'), -matches('band'), -matches('50'), 
+    -matches('outlier')
+  ) %>% 
+  pivot_longer(
+    cols = -matches('MatchId'),
+    names_to = "variable",
+    values_to = "norm_value"
+  ) %>% 
+  mutate(
+    formant = str_sub(variable, 1, 2),
+    norm = str_sub(variable, 4)
+  ) %>% 
+  select(-variable) %>% 
+  pivot_wider(
+    names_from = norm,
+    values_from = norm_value
+  )
+```
+
+First, we look at correlations of the normalisation methods which apply to all
+of the data.
+
+```{r}
+#| label: fig-norm-all
+#| fig.cap: |
+#|   Pairwise correlations of normalisation methods applied to the full data 
+#|   set.
+norm_values %>% 
+  select(
+    -contains('sub'), -MatchId, -formant
+  ) %>% 
+  cor(use="pairwise.complete.obs") %>% 
+  ggcorrplot(method = "square", lab = TRUE)
+```
+
+Now for the top five vowel types:
+
+```{r}
+#| label: fig-norm-5
+#| fig.cap: |
+#|   Pairwise correlations of normalisation methods applied to the top five 
+#|   vowel types only.
+norm_values %>% 
+  select(
+    -MatchId, -formant
+  ) %>% 
+  cor(use='complete.obs') %>% 
+  ggcorrplot(method = "square", lab=TRUE)
+```
+
+It is to be expected that the formant intrinsic methods (Lobanov 2.0 and 
+two parameter log-mean) are closely correlated with one another and not 
+particularly strongly correlated with the (formant extrinsic) single-parameter
+log-mean method.
+
+Table 3 of the paper require the post-normalisation count of vowels for Table 3.
+We output that here.
+
+```{r}
+processed_vowels %>% 
+  filter(!is.na(F1_lob2), !is.na(F2_lob2)) %>% 
+  count(vowel)
+```
+
+
+Finally, we export the data for modelling.
+
+```{r}
+write_rds(processed_vowels, here('data', 'processed_vowels.rds'))
+```
+
+# References {-}
+
+```{r}
+#| echo: false
+grateful::nocite_references(
+  grateful::cite_packages(
+    output = "citekeys", 
+    out.dir = here(), 
+    errors="ignored"
+  )
+)
+```
+
+::: refs
+
+:::
