@@ -9,7 +9,7 @@
 <meta name="author" content="Joshua Wilson Black">
 <meta name="author" content="Lynn Clark">
 <meta name="author" content="Gia Hurring">
-<meta name="dcterms.date" content="2025-12-19">
+<meta name="dcterms.date" content="2026-01-19">
 
 <title>SM2: Modelling</title>
 <style>
@@ -203,7 +203,7 @@ window.Quarto = {
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">19 December 2025</p>
+        <p class="date">19 January 2026</p>
       </div>
     </div>
     
@@ -606,7 +606,7 @@ Figure&nbsp;3: Overall vowel spaces for NZE short front vowels in preschoolers (
 <div class="tabset-margin-container"></div><div class="panel-tabset page-columns page-full">
 <ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Prior predictive check</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href=""><span class="smallcaps">dress</span></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-3-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-3" role="tab" aria-controls="tabset-1-3" aria-selected="false" href=""><span class="smallcaps">kit</span></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-4-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-4" role="tab" aria-controls="tabset-1-4" aria-selected="false" href=""><span class="smallcaps">nurse</span></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-5-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-5" role="tab" aria-controls="tabset-1-5" aria-selected="false" href=""><span class="smallcaps">trap</span></a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-6-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-6" role="tab" aria-controls="tabset-1-6" aria-selected="false" href=""><span class="smallcaps">fleece</span></a></li></ul>
 <div class="tab-content page-columns page-full">
-<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
+<div id="tabset-1-1" class="tab-pane active page-columns page-full" role="tabpanel" aria-labelledby="tabset-1-1-tab">
 <p>We begin by sampling from our prior distribution to ensure that we are producing values in the ballpark of plausible values for our data. We’ll fit this using the data for <span class="smallcaps">dress</span>. This is for coding convenience, as the model is not learning from the data. What we are doing here is ensuring that we are not unduly biasing the model towards a particular result.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>dress_f1_data <span class="ot">&lt;-</span> f1 <span class="sc">|&gt;</span> </span>
@@ -654,7 +654,7 @@ Figure&nbsp;3: Overall vowel spaces for NZE short front vowels in preschoolers (
 <span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We take 100 draws from the prior and plot the distribution.</p>
-<div class="cell">
+<div class="cell page-columns page-full">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>prior_draws <span class="ot">&lt;-</span> <span class="fu">posterior_predict</span>(dress_f1_prior_t, <span class="at">ndraws =</span> <span class="dv">100</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>prior_draws <span class="ot">&lt;-</span> prior_draws <span class="sc">|&gt;</span> </span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">t</span>() <span class="sc">|&gt;</span> </span>
@@ -682,6 +682,18 @@ Figure&nbsp;3: Overall vowel spaces for NZE short front vowels in preschoolers (
 <span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"100 draws from the prior predictive distribution"</span></span>
 <span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">20</span>, <span class="dv">20</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display page-columns page-full">
+<div id="fig-prior-pc" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
+<figure class="quarto-float quarto-float-fig figure page-columns page-full">
+<div aria-describedby="fig-prior-pc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="SM2_modelling_files/figure-html/fig-prior-pc-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: "><img src="SM2_modelling_files/figure-html/fig-prior-pc-1.png" id="fig-prior-pc" class="img-fluid figure-img" width="672"></a>
+</div>
+<figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-prior-pc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4
+</figcaption>
+</figure>
+</div>
+</div>
 </div>
 <p>What we want to see here is that our prior is not excluding plausible values. If anything, our prior could be made even more informative (i.e. restrict the results more). But this should be sufficient for present purposes.</p>
 </div>
@@ -813,10 +825,10 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <div id="fig-ppd-check-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-check-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-check-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: Posterior predictive test of DRESS F1 model split by gender."><img src="SM2_modelling_files/figure-html/fig-ppd-check-1-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-check-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;5: Posterior predictive test of DRESS F1 model split by gender."><img src="SM2_modelling_files/figure-html/fig-ppd-check-1-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-ppd-check-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;4: Posterior predictive test of DRESS F1 model split by gender.
+Figure&nbsp;5: Posterior predictive test of DRESS F1 model split by gender.
 </figcaption>
 </figure>
 </div>
@@ -831,16 +843,16 @@ Figure&nbsp;4: Posterior predictive test of DRESS F1 model split by gender.
 <div id="fig-dress-ppd-2d" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-ppd-2d-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-ppd-2d-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;5: Posterior predictive check for DRESS F1 model."><img src="SM2_modelling_files/figure-html/fig-dress-ppd-2d-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-ppd-2d-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;6: Posterior predictive check for DRESS F1 model."><img src="SM2_modelling_files/figure-html/fig-dress-ppd-2d-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-dress-ppd-2d-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;5: Posterior predictive check for DRESS F1 model.
+Figure&nbsp;6: Posterior predictive check for DRESS F1 model.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-dress-ppd-2d" class="quarto-xref">Figure&nbsp;5</a> tells us that the actual data (the thick blue point) fits roughly within the range of predictions from our model.</p>
+<p><a href="#fig-dress-ppd-2d" class="quarto-xref">Figure&nbsp;6</a> tells us that the actual data (the thick blue point) fits roughly within the range of predictions from our model.</p>
 <p>Let’s look at a traditional quantile-quantile plot to assess model predictions.</p>
 <div class="cell page-columns page-full">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>dress_f1_data <span class="sc">%&gt;%</span></span>
@@ -853,10 +865,10 @@ Figure&nbsp;5: Posterior predictive check for DRESS F1 model.
 <div id="fig-dress-qq-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-qq-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-qq-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;6: "><img src="SM2_modelling_files/figure-html/fig-dress-qq-1-1.png" id="fig-dress-qq-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-qq-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;7: "><img src="SM2_modelling_files/figure-html/fig-dress-qq-1-1.png" id="fig-dress-qq-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-dress-qq-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;6
+Figure&nbsp;7
 </figcaption>
 </figure>
 </div>
@@ -1006,16 +1018,16 @@ Figure&nbsp;6
 <div id="fig-dress-long-test" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-long-test-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-long-test-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;7: "><img src="SM2_modelling_files/figure-html/fig-dress-long-test-1.png" id="fig-dress-long-test" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-long-test-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="Figure&nbsp;8: "><img src="SM2_modelling_files/figure-html/fig-dress-long-test-1.png" id="fig-dress-long-test" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-dress-long-test-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;7
+Figure&nbsp;8
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-dress-long-test" class="quarto-xref">Figure&nbsp;7</a> displays the distribution of predicted values across 100 draws from the posterior distribution (blue) for each difference between collection points in the real data (red). The horizontal lines indicate the mean difference between collection subsequent collection points as predicted (blue) and actually measured (red). We facet by gender.</p>
+<p><a href="#fig-dress-long-test" class="quarto-xref">Figure&nbsp;8</a> displays the distribution of predicted values across 100 draws from the posterior distribution (blue) for each difference between collection points in the real data (red). The horizontal lines indicate the mean difference between collection subsequent collection points as predicted (blue) and actually measured (red). We facet by gender.</p>
 <p>A model which fully captured all the sources of variation in the changes in formant values between collection points would have the an overlapping distribution here. That is not the case here. Our model obviously does not capture some of this variation (perhaps this is unsurprising as we don’t directly model it!). Looking at the vertical lines, we seem to be underestimating the vowel space rising for female preschoolers and slightly overestimating the (very small) mean change in the male preschoolers.</p>
 <p>We now plot smooths for both male and female preschoolers using the <code>modelbased</code> package to generate predictions across both age and duration.</p>
 <p>First, duration:</p>
@@ -1027,10 +1039,10 @@ Figure&nbsp;7
 <div id="fig-dress-duration-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-duration-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-duration-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="Figure&nbsp;8: "><img src="SM2_modelling_files/figure-html/fig-dress-duration-1-1.png" id="fig-dress-duration-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-duration-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="Figure&nbsp;9: "><img src="SM2_modelling_files/figure-html/fig-dress-duration-1-1.png" id="fig-dress-duration-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-dress-duration-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;8
+Figure&nbsp;9
 </figcaption>
 </figure>
 </div>
@@ -1056,16 +1068,16 @@ Figure&nbsp;8
 <div id="fig-dress-age-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-age-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-age-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="Figure&nbsp;9: "><img src="SM2_modelling_files/figure-html/fig-dress-age-1-1.png" id="fig-dress-age-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-age-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Figure&nbsp;10: "><img src="SM2_modelling_files/figure-html/fig-dress-age-1-1.png" id="fig-dress-age-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-dress-age-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;9
+Figure&nbsp;10
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>In <a href="#fig-dress-age-1" class="quarto-xref">Figure&nbsp;9</a>, the <span class="math inline">\(y\)</span>-axis is flipped, so that a rising line indicates a rising vowel in the vowel space. We see that, for the female children, there is a steady rise in the <span class="smallcaps">dress</span>, albeit with wide error bars. We plot both the 70% and 90% credible intervals to give a more graded sense of model uncertainty.</p>
+<p>In <a href="#fig-dress-age-1" class="quarto-xref">Figure&nbsp;10</a>, the <span class="math inline">\(y\)</span>-axis is flipped, so that a rising line indicates a rising vowel in the vowel space. We see that, for the female children, there is a steady rise in the <span class="smallcaps">dress</span>, albeit with wide error bars. We plot both the 70% and 90% credible intervals to give a more graded sense of model uncertainty.</p>
 <p>For our convenience for subsequent models, the following function generates all the smooth plots we are interested in. This time, just with a 90% interval.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This model uses the original `kids` dataframe as a global variable.</span></span>
@@ -1103,10 +1115,10 @@ Figure&nbsp;9
 <div id="fig-dress-mod-plots" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-mod-plots-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-mod-plots-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Figure&nbsp;10: "><img src="SM2_modelling_files/figure-html/fig-dress-mod-plots-1.png" id="fig-dress-mod-plots" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-mod-plots-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Figure&nbsp;11: "><img src="SM2_modelling_files/figure-html/fig-dress-mod-plots-1.png" id="fig-dress-mod-plots" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-dress-mod-plots-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;10
+Figure&nbsp;11
 </figcaption>
 </figure>
 </div>
@@ -1179,10 +1191,10 @@ Figure&nbsp;10
 <div id="fig-ten-dress-f1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ten-dress-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ten-dress-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Figure&nbsp;11: "><img src="SM2_modelling_files/figure-html/fig-ten-dress-f1-1.png" id="fig-ten-dress-f1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ten-dress-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12" title="Figure&nbsp;12: "><img src="SM2_modelling_files/figure-html/fig-ten-dress-f1-1.png" id="fig-ten-dress-f1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ten-dress-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;11
+Figure&nbsp;12
 </figcaption>
 </figure>
 </div>
@@ -1314,10 +1326,10 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <div id="fig-dress-f2-ppd" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-f2-ppd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-f2-ppd-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12" title="Figure&nbsp;12: "><img src="SM2_modelling_files/figure-html/fig-dress-f2-ppd-1.png" id="fig-dress-f2-ppd" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-f2-ppd-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13" title="Figure&nbsp;13: "><img src="SM2_modelling_files/figure-html/fig-dress-f2-ppd-1.png" id="fig-dress-f2-ppd" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-dress-f2-ppd-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;12
+Figure&nbsp;13
 </figcaption>
 </figure>
 </div>
@@ -1332,10 +1344,10 @@ Figure&nbsp;12
 <div id="fig-dress-f2-ppd-2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-f2-ppd-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-f2-ppd-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13" title="Figure&nbsp;13: "><img src="SM2_modelling_files/figure-html/fig-dress-f2-ppd-2-1.png" id="fig-dress-f2-ppd-2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-f2-ppd-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14" title="Figure&nbsp;14: "><img src="SM2_modelling_files/figure-html/fig-dress-f2-ppd-2-1.png" id="fig-dress-f2-ppd-2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-dress-f2-ppd-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;13
+Figure&nbsp;14
 </figcaption>
 </figure>
 </div>
@@ -1352,10 +1364,10 @@ Figure&nbsp;13
 <div id="fig-dress-f2-qq" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-f2-qq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-f2-qq-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14" title="Figure&nbsp;14: "><img src="SM2_modelling_files/figure-html/fig-dress-f2-qq-1.png" id="fig-dress-f2-qq" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-f2-qq-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15" title="Figure&nbsp;15: "><img src="SM2_modelling_files/figure-html/fig-dress-f2-qq-1.png" id="fig-dress-f2-qq" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-dress-f2-qq-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;14
+Figure&nbsp;15
 </figcaption>
 </figure>
 </div>
@@ -1368,10 +1380,10 @@ Figure&nbsp;14
 <div id="fig-dress-f2-modplots" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-f2-modplots-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-f2-modplots-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15" title="Figure&nbsp;15: "><img src="SM2_modelling_files/figure-html/fig-dress-f2-modplots-1.png" id="fig-dress-f2-modplots" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-f2-modplots-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16" title="Figure&nbsp;16: "><img src="SM2_modelling_files/figure-html/fig-dress-f2-modplots-1.png" id="fig-dress-f2-modplots" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-dress-f2-modplots-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;15
+Figure&nbsp;16
 </figcaption>
 </figure>
 </div>
@@ -1407,10 +1419,10 @@ Figure&nbsp;15
 <div id="fig-ten-dress-f2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ten-dress-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ten-dress-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16" title="Figure&nbsp;16: "><img src="SM2_modelling_files/figure-html/fig-ten-dress-f2-1.png" id="fig-ten-dress-f2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ten-dress-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17" title="Figure&nbsp;17: "><img src="SM2_modelling_files/figure-html/fig-ten-dress-f2-1.png" id="fig-ten-dress-f2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ten-dress-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;16
+Figure&nbsp;17
 </figcaption>
 </figure>
 </div>
@@ -1547,10 +1559,10 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <div id="fig-kit-ppd-f1-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-ppd-f1-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-ppd-f1-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17" title="Figure&nbsp;17: "><img src="SM2_modelling_files/figure-html/fig-kit-ppd-f1-1-1.png" id="fig-kit-ppd-f1-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-ppd-f1-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-18" title="Figure&nbsp;18: "><img src="SM2_modelling_files/figure-html/fig-kit-ppd-f1-1-1.png" id="fig-kit-ppd-f1-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-kit-ppd-f1-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;17
+Figure&nbsp;18
 </figcaption>
 </figure>
 </div>
@@ -1565,10 +1577,10 @@ Figure&nbsp;17
 <div id="fig-kit-ppd-f1-2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-ppd-f1-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-ppd-f1-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-18" title="Figure&nbsp;18: "><img src="SM2_modelling_files/figure-html/fig-kit-ppd-f1-2-1.png" id="fig-kit-ppd-f1-2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-ppd-f1-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-19" title="Figure&nbsp;19: "><img src="SM2_modelling_files/figure-html/fig-kit-ppd-f1-2-1.png" id="fig-kit-ppd-f1-2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-kit-ppd-f1-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;18
+Figure&nbsp;19
 </figcaption>
 </figure>
 </div>
@@ -1583,10 +1595,10 @@ Figure&nbsp;18
 <div id="fig-kit-ppd-f1-3" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-ppd-f1-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-ppd-f1-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-19" title="Figure&nbsp;19: "><img src="SM2_modelling_files/figure-html/fig-kit-ppd-f1-3-1.png" id="fig-kit-ppd-f1-3" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-ppd-f1-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-20" title="Figure&nbsp;20: "><img src="SM2_modelling_files/figure-html/fig-kit-ppd-f1-3-1.png" id="fig-kit-ppd-f1-3" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-kit-ppd-f1-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;19
+Figure&nbsp;20
 </figcaption>
 </figure>
 </div>
@@ -1599,10 +1611,10 @@ Figure&nbsp;19
 <div id="fig-kit-modplot-f1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-modplot-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-modplot-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-20" title="Figure&nbsp;20: "><img src="SM2_modelling_files/figure-html/fig-kit-modplot-f1-1.png" id="fig-kit-modplot-f1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-modplot-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-21" title="Figure&nbsp;21: "><img src="SM2_modelling_files/figure-html/fig-kit-modplot-f1-1.png" id="fig-kit-modplot-f1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-kit-modplot-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;20
+Figure&nbsp;21
 </figcaption>
 </figure>
 </div>
@@ -1629,16 +1641,16 @@ Figure&nbsp;20
 <div id="fig-kit-longcheck-f1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-longcheck-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-longcheck-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-21" title="Figure&nbsp;21: "><img src="SM2_modelling_files/figure-html/fig-kit-longcheck-f1-1.png" id="fig-kit-longcheck-f1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-longcheck-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-22" title="Figure&nbsp;22: "><img src="SM2_modelling_files/figure-html/fig-kit-longcheck-f1-1.png" id="fig-kit-longcheck-f1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-kit-longcheck-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;21
+Figure&nbsp;22
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-kit-longcheck-f1" class="quarto-xref">Figure&nbsp;21</a> is a little chaotic. We see that a lot of the predictions are crushed into a a tight range in our predictions. We’ve divided by gender as the pattern identified only seems clear in the female speakers. In both cases, the shifts between sessions are in the positive direction, although the distribution sits very close to zero! In any case, what we are looking for here is significant <em>incompatibility</em> between the distribution of shifts between collection points and the corresponding model predictions.</p>
+<p><a href="#fig-kit-longcheck-f1" class="quarto-xref">Figure&nbsp;22</a> is a little chaotic. We see that a lot of the predictions are crushed into a a tight range in our predictions. We’ve divided by gender as the pattern identified only seems clear in the female speakers. In both cases, the shifts between sessions are in the positive direction, although the distribution sits very close to zero! In any case, what we are looking for here is significant <em>incompatibility</em> between the distribution of shifts between collection points and the corresponding model predictions.</p>
 <div class="cell page-columns page-full">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>kit_f1_10 <span class="ot">&lt;-</span> <span class="fu">ten_month_preds</span>(kit_f1_fit, sample_points)</span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>kit_f1_10 <span class="sc">%&gt;%</span> </span>
@@ -1655,10 +1667,10 @@ Figure&nbsp;21
 <div id="fig-ten-kit-f1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ten-kit-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ten-kit-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-22" title="Figure&nbsp;22: "><img src="SM2_modelling_files/figure-html/fig-ten-kit-f1-1.png" id="fig-ten-kit-f1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ten-kit-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-23" title="Figure&nbsp;23: "><img src="SM2_modelling_files/figure-html/fig-ten-kit-f1-1.png" id="fig-ten-kit-f1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ten-kit-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;22
+Figure&nbsp;23
 </figcaption>
 </figure>
 </div>
@@ -1785,10 +1797,10 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <div id="fig-kit-ppd-f2-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-ppd-f2-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-ppd-f2-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-23" title="Figure&nbsp;23: "><img src="SM2_modelling_files/figure-html/fig-kit-ppd-f2-1-1.png" id="fig-kit-ppd-f2-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-ppd-f2-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-24" title="Figure&nbsp;24: "><img src="SM2_modelling_files/figure-html/fig-kit-ppd-f2-1-1.png" id="fig-kit-ppd-f2-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-kit-ppd-f2-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;23
+Figure&nbsp;24
 </figcaption>
 </figure>
 </div>
@@ -1803,10 +1815,10 @@ Figure&nbsp;23
 <div id="fig-kit-ppd-f2-2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-ppd-f2-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-ppd-f2-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-24" title="Figure&nbsp;24: "><img src="SM2_modelling_files/figure-html/fig-kit-ppd-f2-2-1.png" id="fig-kit-ppd-f2-2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-ppd-f2-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-25" title="Figure&nbsp;25: "><img src="SM2_modelling_files/figure-html/fig-kit-ppd-f2-2-1.png" id="fig-kit-ppd-f2-2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-kit-ppd-f2-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;24
+Figure&nbsp;25
 </figcaption>
 </figure>
 </div>
@@ -1821,10 +1833,10 @@ Figure&nbsp;24
 <div id="fig-kit-ppd-f2-3" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-ppd-f2-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-ppd-f2-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-25" title="Figure&nbsp;25: "><img src="SM2_modelling_files/figure-html/fig-kit-ppd-f2-3-1.png" id="fig-kit-ppd-f2-3" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-ppd-f2-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-26" title="Figure&nbsp;26: "><img src="SM2_modelling_files/figure-html/fig-kit-ppd-f2-3-1.png" id="fig-kit-ppd-f2-3" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-kit-ppd-f2-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;25
+Figure&nbsp;26
 </figcaption>
 </figure>
 </div>
@@ -1837,10 +1849,10 @@ Figure&nbsp;25
 <div id="fig-kit-modplots-f2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-modplots-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-modplots-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-26" title="Figure&nbsp;26: "><img src="SM2_modelling_files/figure-html/fig-kit-modplots-f2-1.png" id="fig-kit-modplots-f2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-modplots-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-27" title="Figure&nbsp;27: "><img src="SM2_modelling_files/figure-html/fig-kit-modplots-f2-1.png" id="fig-kit-modplots-f2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-kit-modplots-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;26
+Figure&nbsp;27
 </figcaption>
 </figure>
 </div>
@@ -1866,16 +1878,16 @@ Figure&nbsp;26
 <div id="fig-kit-diffcheck-f2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-diffcheck-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-diffcheck-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-27" title="Figure&nbsp;27: "><img src="SM2_modelling_files/figure-html/fig-kit-diffcheck-f2-1.png" id="fig-kit-diffcheck-f2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-diffcheck-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-28" title="Figure&nbsp;28: "><img src="SM2_modelling_files/figure-html/fig-kit-diffcheck-f2-1.png" id="fig-kit-diffcheck-f2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-kit-diffcheck-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;27
+Figure&nbsp;28
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-kit-diffcheck-f2" class="quarto-xref">Figure&nbsp;27</a> shows that our predictions are very tight and don’t particularly match the longitudinal data. For the male preschoolers we predict no change, but the longitudinal data suggests backing (as does our smooth). The female means appear on either side of zero for the predictions and the real longitudinal data. But we do not predict any significant change for female preschoolers in <a href="#fig-kit-modplots-f2" class="quarto-xref">Figure&nbsp;26</a>.</p>
+<p><a href="#fig-kit-diffcheck-f2" class="quarto-xref">Figure&nbsp;28</a> shows that our predictions are very tight and don’t particularly match the longitudinal data. For the male preschoolers we predict no change, but the longitudinal data suggests backing (as does our smooth). The female means appear on either side of zero for the predictions and the real longitudinal data. But we do not predict any significant change for female preschoolers in <a href="#fig-kit-modplots-f2" class="quarto-xref">Figure&nbsp;27</a>.</p>
 <div class="cell page-columns page-full">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>kit_f2_10 <span class="ot">&lt;-</span> <span class="fu">ten_month_preds</span>(kit_f2_fit, sample_points)</span>
 <span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>kit_f2_10 <span class="sc">%&gt;%</span> </span>
@@ -1892,10 +1904,10 @@ Figure&nbsp;27
 <div id="fig-ten-kit-f2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ten-kit-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ten-kit-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-28" title="Figure&nbsp;28: "><img src="SM2_modelling_files/figure-html/fig-ten-kit-f2-1.png" id="fig-ten-kit-f2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ten-kit-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-29" title="Figure&nbsp;29: "><img src="SM2_modelling_files/figure-html/fig-ten-kit-f2-1.png" id="fig-ten-kit-f2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ten-kit-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;28
+Figure&nbsp;29
 </figcaption>
 </figure>
 </div>
@@ -2030,10 +2042,10 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <div id="fig-nurse-f1-ppd-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-nurse-f1-ppd-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-nurse-f1-ppd-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-29" title="Figure&nbsp;29: "><img src="SM2_modelling_files/figure-html/fig-nurse-f1-ppd-1-1.png" id="fig-nurse-f1-ppd-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-nurse-f1-ppd-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-30" title="Figure&nbsp;30: "><img src="SM2_modelling_files/figure-html/fig-nurse-f1-ppd-1-1.png" id="fig-nurse-f1-ppd-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-nurse-f1-ppd-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;29
+Figure&nbsp;30
 </figcaption>
 </figure>
 </div>
@@ -2048,10 +2060,10 @@ Figure&nbsp;29
 <div id="fig-nurse-f1-ppd-2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-nurse-f1-ppd-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-nurse-f1-ppd-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-30" title="Figure&nbsp;30: "><img src="SM2_modelling_files/figure-html/fig-nurse-f1-ppd-2-1.png" id="fig-nurse-f1-ppd-2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-nurse-f1-ppd-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-31" title="Figure&nbsp;31: "><img src="SM2_modelling_files/figure-html/fig-nurse-f1-ppd-2-1.png" id="fig-nurse-f1-ppd-2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-nurse-f1-ppd-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;30
+Figure&nbsp;31
 </figcaption>
 </figure>
 </div>
@@ -2064,10 +2076,10 @@ Figure&nbsp;30
 <div id="fig-nurse-f1-modplots" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-nurse-f1-modplots-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-nurse-f1-modplots-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-31" title="Figure&nbsp;31: "><img src="SM2_modelling_files/figure-html/fig-nurse-f1-modplots-1.png" id="fig-nurse-f1-modplots" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-nurse-f1-modplots-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-32" title="Figure&nbsp;32: "><img src="SM2_modelling_files/figure-html/fig-nurse-f1-modplots-1.png" id="fig-nurse-f1-modplots" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-nurse-f1-modplots-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;31
+Figure&nbsp;32
 </figcaption>
 </figure>
 </div>
@@ -2092,10 +2104,10 @@ Figure&nbsp;31
 <div id="fig-nurse-f1-diffcheck" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-nurse-f1-diffcheck-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-nurse-f1-diffcheck-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-32" title="Figure&nbsp;32: "><img src="SM2_modelling_files/figure-html/fig-nurse-f1-diffcheck-1.png" id="fig-nurse-f1-diffcheck" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-nurse-f1-diffcheck-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-33" title="Figure&nbsp;33: "><img src="SM2_modelling_files/figure-html/fig-nurse-f1-diffcheck-1.png" id="fig-nurse-f1-diffcheck" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-nurse-f1-diffcheck-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;32
+Figure&nbsp;33
 </figcaption>
 </figure>
 </div>
@@ -2118,10 +2130,10 @@ Figure&nbsp;32
 <div id="fig-ten-nurse-f1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ten-nurse-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ten-nurse-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-33" title="Figure&nbsp;33: "><img src="SM2_modelling_files/figure-html/fig-ten-nurse-f1-1.png" id="fig-ten-nurse-f1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ten-nurse-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-34" title="Figure&nbsp;34: "><img src="SM2_modelling_files/figure-html/fig-ten-nurse-f1-1.png" id="fig-ten-nurse-f1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ten-nurse-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;33
+Figure&nbsp;34
 </figcaption>
 </figure>
 </div>
@@ -2248,10 +2260,10 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <div id="fig-ppd-f2-nurse-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-f2-nurse-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-f2-nurse-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-34" title="Figure&nbsp;34: "><img src="SM2_modelling_files/figure-html/fig-ppd-f2-nurse-1-1.png" id="fig-ppd-f2-nurse-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-f2-nurse-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-35" title="Figure&nbsp;35: "><img src="SM2_modelling_files/figure-html/fig-ppd-f2-nurse-1-1.png" id="fig-ppd-f2-nurse-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-f2-nurse-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;34
+Figure&nbsp;35
 </figcaption>
 </figure>
 </div>
@@ -2266,10 +2278,10 @@ Figure&nbsp;34
 <div id="fig-ppd-f2-nurse-3" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-f2-nurse-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-f2-nurse-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-35" title="Figure&nbsp;35: "><img src="SM2_modelling_files/figure-html/fig-ppd-f2-nurse-3-1.png" id="fig-ppd-f2-nurse-3" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-f2-nurse-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-36" title="Figure&nbsp;36: "><img src="SM2_modelling_files/figure-html/fig-ppd-f2-nurse-3-1.png" id="fig-ppd-f2-nurse-3" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-f2-nurse-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;35
+Figure&nbsp;36
 </figcaption>
 </figure>
 </div>
@@ -2284,10 +2296,10 @@ Figure&nbsp;35
 <div id="fig-ppd-f2-nurse-4" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-f2-nurse-4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-f2-nurse-4-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-36" title="Figure&nbsp;36: "><img src="SM2_modelling_files/figure-html/fig-ppd-f2-nurse-4-1.png" id="fig-ppd-f2-nurse-4" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-f2-nurse-4-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-37" title="Figure&nbsp;37: "><img src="SM2_modelling_files/figure-html/fig-ppd-f2-nurse-4-1.png" id="fig-ppd-f2-nurse-4" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-f2-nurse-4-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;36
+Figure&nbsp;37
 </figcaption>
 </figure>
 </div>
@@ -2300,10 +2312,10 @@ Figure&nbsp;36
 <div id="fig-modplots-f2-nurse-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-modplots-f2-nurse-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-modplots-f2-nurse-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-37" title="Figure&nbsp;37: "><img src="SM2_modelling_files/figure-html/fig-modplots-f2-nurse-1-1.png" id="fig-modplots-f2-nurse-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-modplots-f2-nurse-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-38" title="Figure&nbsp;38: "><img src="SM2_modelling_files/figure-html/fig-modplots-f2-nurse-1-1.png" id="fig-modplots-f2-nurse-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-modplots-f2-nurse-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;37
+Figure&nbsp;38
 </figcaption>
 </figure>
 </div>
@@ -2328,10 +2340,10 @@ Figure&nbsp;37
 <div id="fig-diffcheck-f2-nurse" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-diffcheck-f2-nurse-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-diffcheck-f2-nurse-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-38" title="Figure&nbsp;38: "><img src="SM2_modelling_files/figure-html/fig-diffcheck-f2-nurse-1.png" id="fig-diffcheck-f2-nurse" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-diffcheck-f2-nurse-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-39" title="Figure&nbsp;39: "><img src="SM2_modelling_files/figure-html/fig-diffcheck-f2-nurse-1.png" id="fig-diffcheck-f2-nurse" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-diffcheck-f2-nurse-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;38
+Figure&nbsp;39
 </figcaption>
 </figure>
 </div>
@@ -2354,10 +2366,10 @@ Figure&nbsp;38
 <div id="fig-ten-nurse-f2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ten-nurse-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ten-nurse-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-39" title="Figure&nbsp;39: "><img src="SM2_modelling_files/figure-html/fig-ten-nurse-f2-1.png" id="fig-ten-nurse-f2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ten-nurse-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-40" title="Figure&nbsp;40: "><img src="SM2_modelling_files/figure-html/fig-ten-nurse-f2-1.png" id="fig-ten-nurse-f2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ten-nurse-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;39
+Figure&nbsp;40
 </figcaption>
 </figure>
 </div>
@@ -2492,10 +2504,10 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <div id="fig-ppd-f1-trap-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-f1-trap-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-f1-trap-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-40" title="Figure&nbsp;40: "><img src="SM2_modelling_files/figure-html/fig-ppd-f1-trap-1-1.png" id="fig-ppd-f1-trap-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-f1-trap-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-41" title="Figure&nbsp;41: "><img src="SM2_modelling_files/figure-html/fig-ppd-f1-trap-1-1.png" id="fig-ppd-f1-trap-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-f1-trap-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;40
+Figure&nbsp;41
 </figcaption>
 </figure>
 </div>
@@ -2510,10 +2522,10 @@ Figure&nbsp;40
 <div id="fig-ppd-f1-trap-2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-f1-trap-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-f1-trap-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-41" title="Figure&nbsp;41: "><img src="SM2_modelling_files/figure-html/fig-ppd-f1-trap-2-1.png" id="fig-ppd-f1-trap-2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-f1-trap-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-42" title="Figure&nbsp;42: "><img src="SM2_modelling_files/figure-html/fig-ppd-f1-trap-2-1.png" id="fig-ppd-f1-trap-2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-f1-trap-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;41
+Figure&nbsp;42
 </figcaption>
 </figure>
 </div>
@@ -2528,10 +2540,10 @@ Figure&nbsp;41
 <div id="fig-ppd-f1-trap-3" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-f1-trap-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-f1-trap-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-42" title="Figure&nbsp;42: "><img src="SM2_modelling_files/figure-html/fig-ppd-f1-trap-3-1.png" id="fig-ppd-f1-trap-3" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-f1-trap-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-43" title="Figure&nbsp;43: "><img src="SM2_modelling_files/figure-html/fig-ppd-f1-trap-3-1.png" id="fig-ppd-f1-trap-3" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-f1-trap-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;42
+Figure&nbsp;43
 </figcaption>
 </figure>
 </div>
@@ -2544,10 +2556,10 @@ Figure&nbsp;42
 <div id="fig-modplots-f1-trap" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-modplots-f1-trap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-modplots-f1-trap-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-43" title="Figure&nbsp;43: "><img src="SM2_modelling_files/figure-html/fig-modplots-f1-trap-1.png" id="fig-modplots-f1-trap" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-modplots-f1-trap-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-44" title="Figure&nbsp;44: "><img src="SM2_modelling_files/figure-html/fig-modplots-f1-trap-1.png" id="fig-modplots-f1-trap" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-modplots-f1-trap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;43
+Figure&nbsp;44
 </figcaption>
 </figure>
 </div>
@@ -2572,10 +2584,10 @@ Figure&nbsp;43
 <div id="fig-diffcheck-f1-trap-2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-diffcheck-f1-trap-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-diffcheck-f1-trap-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-44" title="Figure&nbsp;44: "><img src="SM2_modelling_files/figure-html/fig-diffcheck-f1-trap-2-1.png" id="fig-diffcheck-f1-trap-2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-diffcheck-f1-trap-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-45" title="Figure&nbsp;45: "><img src="SM2_modelling_files/figure-html/fig-diffcheck-f1-trap-2-1.png" id="fig-diffcheck-f1-trap-2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-diffcheck-f1-trap-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;44
+Figure&nbsp;45
 </figcaption>
 </figure>
 </div>
@@ -2597,10 +2609,10 @@ Figure&nbsp;44
 <div id="fig-ten-trap-f1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ten-trap-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ten-trap-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-45" title="Figure&nbsp;45: "><img src="SM2_modelling_files/figure-html/fig-ten-trap-f1-1.png" id="fig-ten-trap-f1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ten-trap-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-46" title="Figure&nbsp;46: "><img src="SM2_modelling_files/figure-html/fig-ten-trap-f1-1.png" id="fig-ten-trap-f1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ten-trap-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;45
+Figure&nbsp;46
 </figcaption>
 </figure>
 </div>
@@ -2726,10 +2738,10 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <div id="fig-ppd-f2-trap-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-f2-trap-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-f2-trap-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-46" title="Figure&nbsp;46: "><img src="SM2_modelling_files/figure-html/fig-ppd-f2-trap-1-1.png" id="fig-ppd-f2-trap-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-f2-trap-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-47" title="Figure&nbsp;47: "><img src="SM2_modelling_files/figure-html/fig-ppd-f2-trap-1-1.png" id="fig-ppd-f2-trap-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-f2-trap-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;46
+Figure&nbsp;47
 </figcaption>
 </figure>
 </div>
@@ -2744,10 +2756,10 @@ Figure&nbsp;46
 <div id="fig-ppd-f2-trap-2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-f2-trap-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-f2-trap-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-47" title="Figure&nbsp;47: "><img src="SM2_modelling_files/figure-html/fig-ppd-f2-trap-2-1.png" id="fig-ppd-f2-trap-2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-f2-trap-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-48" title="Figure&nbsp;48: "><img src="SM2_modelling_files/figure-html/fig-ppd-f2-trap-2-1.png" id="fig-ppd-f2-trap-2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-f2-trap-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;47
+Figure&nbsp;48
 </figcaption>
 </figure>
 </div>
@@ -2762,10 +2774,10 @@ Figure&nbsp;47
 <div id="fig-ppd-f2-trap-3" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-f2-trap-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-f2-trap-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-48" title="Figure&nbsp;48: "><img src="SM2_modelling_files/figure-html/fig-ppd-f2-trap-3-1.png" id="fig-ppd-f2-trap-3" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-f2-trap-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-49" title="Figure&nbsp;49: "><img src="SM2_modelling_files/figure-html/fig-ppd-f2-trap-3-1.png" id="fig-ppd-f2-trap-3" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-f2-trap-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;48
+Figure&nbsp;49
 </figcaption>
 </figure>
 </div>
@@ -2778,10 +2790,10 @@ Figure&nbsp;48
 <div id="fig-modplot-f2-trap" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-modplot-f2-trap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-modplot-f2-trap-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-49" title="Figure&nbsp;49: "><img src="SM2_modelling_files/figure-html/fig-modplot-f2-trap-1.png" id="fig-modplot-f2-trap" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-modplot-f2-trap-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-50" title="Figure&nbsp;50: "><img src="SM2_modelling_files/figure-html/fig-modplot-f2-trap-1.png" id="fig-modplot-f2-trap" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-modplot-f2-trap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;49
+Figure&nbsp;50
 </figcaption>
 </figure>
 </div>
@@ -2815,10 +2827,10 @@ Figure&nbsp;49
 <div id="fig-ten-trap-f2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ten-trap-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ten-trap-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-50" title="Figure&nbsp;50: "><img src="SM2_modelling_files/figure-html/fig-ten-trap-f2-1.png" id="fig-ten-trap-f2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ten-trap-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-51" title="Figure&nbsp;51: "><img src="SM2_modelling_files/figure-html/fig-ten-trap-f2-1.png" id="fig-ten-trap-f2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ten-trap-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;50
+Figure&nbsp;51
 </figcaption>
 </figure>
 </div>
@@ -2953,10 +2965,10 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <div id="fig-ppd-f1-fleece-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-f1-fleece-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-f1-fleece-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-51" title="Figure&nbsp;51: "><img src="SM2_modelling_files/figure-html/fig-ppd-f1-fleece-1-1.png" id="fig-ppd-f1-fleece-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-f1-fleece-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-52" title="Figure&nbsp;52: "><img src="SM2_modelling_files/figure-html/fig-ppd-f1-fleece-1-1.png" id="fig-ppd-f1-fleece-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-f1-fleece-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;51
+Figure&nbsp;52
 </figcaption>
 </figure>
 </div>
@@ -2971,10 +2983,10 @@ Figure&nbsp;51
 <div id="fig-ppd-f1-fleece-2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-f1-fleece-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-f1-fleece-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-52" title="Figure&nbsp;52: "><img src="SM2_modelling_files/figure-html/fig-ppd-f1-fleece-2-1.png" id="fig-ppd-f1-fleece-2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-f1-fleece-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-53" title="Figure&nbsp;53: "><img src="SM2_modelling_files/figure-html/fig-ppd-f1-fleece-2-1.png" id="fig-ppd-f1-fleece-2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-f1-fleece-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;52
+Figure&nbsp;53
 </figcaption>
 </figure>
 </div>
@@ -2989,10 +3001,10 @@ Figure&nbsp;52
 <div id="fig-ppd-f1-fleece-3" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-f1-fleece-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-f1-fleece-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-53" title="Figure&nbsp;53: "><img src="SM2_modelling_files/figure-html/fig-ppd-f1-fleece-3-1.png" id="fig-ppd-f1-fleece-3" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-f1-fleece-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-54" title="Figure&nbsp;54: "><img src="SM2_modelling_files/figure-html/fig-ppd-f1-fleece-3-1.png" id="fig-ppd-f1-fleece-3" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-f1-fleece-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;53
+Figure&nbsp;54
 </figcaption>
 </figure>
 </div>
@@ -3005,10 +3017,10 @@ Figure&nbsp;53
 <div id="fig-modplots-f1-fleece" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-modplots-f1-fleece-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-modplots-f1-fleece-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-54" title="Figure&nbsp;54: "><img src="SM2_modelling_files/figure-html/fig-modplots-f1-fleece-1.png" id="fig-modplots-f1-fleece" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-modplots-f1-fleece-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-55" title="Figure&nbsp;55: "><img src="SM2_modelling_files/figure-html/fig-modplots-f1-fleece-1.png" id="fig-modplots-f1-fleece" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-modplots-f1-fleece-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;54
+Figure&nbsp;55
 </figcaption>
 </figure>
 </div>
@@ -3033,10 +3045,10 @@ Figure&nbsp;54
 <div id="fig-diffplot-f1-fleece-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-diffplot-f1-fleece-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-diffplot-f1-fleece-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-55" title="Figure&nbsp;55: "><img src="SM2_modelling_files/figure-html/fig-diffplot-f1-fleece-1-1.png" id="fig-diffplot-f1-fleece-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-diffplot-f1-fleece-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-56" title="Figure&nbsp;56: "><img src="SM2_modelling_files/figure-html/fig-diffplot-f1-fleece-1-1.png" id="fig-diffplot-f1-fleece-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-diffplot-f1-fleece-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;55
+Figure&nbsp;56
 </figcaption>
 </figure>
 </div>
@@ -3059,10 +3071,10 @@ Figure&nbsp;55
 <div id="fig-ten-fleece-f1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ten-fleece-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ten-fleece-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-56" title="Figure&nbsp;56: "><img src="SM2_modelling_files/figure-html/fig-ten-fleece-f1-1.png" id="fig-ten-fleece-f1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ten-fleece-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-57" title="Figure&nbsp;57: "><img src="SM2_modelling_files/figure-html/fig-ten-fleece-f1-1.png" id="fig-ten-fleece-f1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ten-fleece-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;56
+Figure&nbsp;57
 </figcaption>
 </figure>
 </div>
@@ -3192,10 +3204,10 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <div id="fig-ppd-fleece-f2-1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-fleece-f2-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-fleece-f2-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-57" title="Figure&nbsp;57: "><img src="SM2_modelling_files/figure-html/fig-ppd-fleece-f2-1-1.png" id="fig-ppd-fleece-f2-1" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-fleece-f2-1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-58" title="Figure&nbsp;58: "><img src="SM2_modelling_files/figure-html/fig-ppd-fleece-f2-1-1.png" id="fig-ppd-fleece-f2-1" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-fleece-f2-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;57
+Figure&nbsp;58
 </figcaption>
 </figure>
 </div>
@@ -3210,10 +3222,10 @@ Figure&nbsp;57
 <div id="fig-ppd-fleece-f2-2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-fleece-f2-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-fleece-f2-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-58" title="Figure&nbsp;58: "><img src="SM2_modelling_files/figure-html/fig-ppd-fleece-f2-2-1.png" id="fig-ppd-fleece-f2-2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-fleece-f2-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-59" title="Figure&nbsp;59: "><img src="SM2_modelling_files/figure-html/fig-ppd-fleece-f2-2-1.png" id="fig-ppd-fleece-f2-2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-fleece-f2-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;58
+Figure&nbsp;59
 </figcaption>
 </figure>
 </div>
@@ -3228,10 +3240,10 @@ Figure&nbsp;58
 <div id="fig-ppd-fleece-f2-3" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ppd-fleece-f2-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ppd-fleece-f2-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-59" title="Figure&nbsp;59: "><img src="SM2_modelling_files/figure-html/fig-ppd-fleece-f2-3-1.png" id="fig-ppd-fleece-f2-3" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ppd-fleece-f2-3-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-60" title="Figure&nbsp;60: "><img src="SM2_modelling_files/figure-html/fig-ppd-fleece-f2-3-1.png" id="fig-ppd-fleece-f2-3" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ppd-fleece-f2-3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;59
+Figure&nbsp;60
 </figcaption>
 </figure>
 </div>
@@ -3244,10 +3256,10 @@ Figure&nbsp;59
 <div id="fig-modplots-fleece-f2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-modplots-fleece-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-modplots-fleece-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-60" title="Figure&nbsp;60: "><img src="SM2_modelling_files/figure-html/fig-modplots-fleece-f2-1.png" id="fig-modplots-fleece-f2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-modplots-fleece-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-61" title="Figure&nbsp;61: "><img src="SM2_modelling_files/figure-html/fig-modplots-fleece-f2-1.png" id="fig-modplots-fleece-f2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-modplots-fleece-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;60
+Figure&nbsp;61
 </figcaption>
 </figure>
 </div>
@@ -3281,10 +3293,10 @@ Figure&nbsp;60
 <div id="fig-ten-fleece-f2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-ten-fleece-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-ten-fleece-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-61" title="Figure&nbsp;61: "><img src="SM2_modelling_files/figure-html/fig-ten-fleece-f2-1.png" id="fig-ten-fleece-f2" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-ten-fleece-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-62" title="Figure&nbsp;62: "><img src="SM2_modelling_files/figure-html/fig-ten-fleece-f2-1.png" id="fig-ten-fleece-f2" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-ten-fleece-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;61
+Figure&nbsp;62
 </figcaption>
 </figure>
 </div>
@@ -3347,10 +3359,10 @@ Figure&nbsp;61
 <div id="fig-allvar-change" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-allvar-change-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-allvar-change-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-62" title="Figure&nbsp;62: "><img src="SM2_modelling_files/figure-html/fig-allvar-change-1.png" id="fig-allvar-change" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-allvar-change-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-63" title="Figure&nbsp;63: "><img src="SM2_modelling_files/figure-html/fig-allvar-change-1.png" id="fig-allvar-change" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-allvar-change-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;62
+Figure&nbsp;63
 </figcaption>
 </figure>
 </div>
@@ -3399,10 +3411,10 @@ Figure&nbsp;62
 <div id="fig-subset-change" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-subset-change-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-subset-change-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-63" title="Figure&nbsp;63: "><img src="SM2_modelling_files/figure-html/fig-subset-change-1.png" id="fig-subset-change" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-subset-change-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-64" title="Figure&nbsp;64: "><img src="SM2_modelling_files/figure-html/fig-subset-change-1.png" id="fig-subset-change" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-subset-change-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;63
+Figure&nbsp;64
 </figcaption>
 </figure>
 </div>
@@ -3714,10 +3726,10 @@ Predictions are on the link-scale.</code></pre>
 <div id="fig-qb-age-test" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full" width="672">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-qb-age-test-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-qb-age-test-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-64" title="Figure&nbsp;64: "><img src="SM2_modelling_files/figure-html/fig-qb-age-test-1.png" id="fig-qb-age-test" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-qb-age-test-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-65" title="Figure&nbsp;65: "><img src="SM2_modelling_files/figure-html/fig-qb-age-test-1.png" id="fig-qb-age-test" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig quarto-uncaptioned margin-caption" id="fig-qb-age-test-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;64
+Figure&nbsp;65
 </figcaption>
 </figure>
 </div>
@@ -3774,7 +3786,7 @@ Figure&nbsp;64
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="SM2_modelling_files/figure-html/unnamed-chunk-136-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-65"><img src="SM2_modelling_files/figure-html/unnamed-chunk-136-1.png" class="img-fluid figure-img" width="672"></a></p>
+<p><a href="SM2_modelling_files/figure-html/unnamed-chunk-136-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-66"><img src="SM2_modelling_files/figure-html/unnamed-chunk-136-1.png" class="img-fluid figure-img" width="672"></a></p>
 </figure>
 </div>
 </div>
@@ -3919,7 +3931,7 @@ Figure&nbsp;64
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><a href="SM2_modelling_files/figure-html/unnamed-chunk-138-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-66"><img src="SM2_modelling_files/figure-html/unnamed-chunk-138-1.png" class="img-fluid figure-img" width="672"></a></p>
+<p><a href="SM2_modelling_files/figure-html/unnamed-chunk-138-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-67"><img src="SM2_modelling_files/figure-html/unnamed-chunk-138-1.png" class="img-fluid figure-img" width="672"></a></p>
 </figure>
 </div>
 </div>
@@ -3990,16 +4002,16 @@ Figure&nbsp;64
 <div id="fig-dress-f1-comp" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-f1-comp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-f1-comp-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-67" title="Figure&nbsp;65: DRESS F1 change in preschoolers with ‘caregiver’ reference."><img src="SM2_modelling_files/figure-html/fig-dress-f1-comp-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-f1-comp-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-68" title="Figure&nbsp;66: DRESS F1 change in preschoolers with ‘caregiver’ reference."><img src="SM2_modelling_files/figure-html/fig-dress-f1-comp-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-dress-f1-comp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;65: DRESS F1 change in preschoolers with ‘caregiver’ reference.
+Figure&nbsp;66: DRESS F1 change in preschoolers with ‘caregiver’ reference.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-dress-f1-comp" class="quarto-xref">Figure&nbsp;65</a> shows the preschoolers, both male and female, approaching the caregiver level (the black line) in <span class="smallcaps">dress</span> F1.</p>
+<p><a href="#fig-dress-f1-comp" class="quarto-xref">Figure&nbsp;66</a> shows the preschoolers, both male and female, approaching the caregiver level (the black line) in <span class="smallcaps">dress</span> F1.</p>
 <p>We now apply the plot function to each of the models.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb172"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb172-1"><a href="#cb172-1" aria-hidden="true" tabindex="-1"></a>comp_plots <span class="ot">&lt;-</span> <span class="fu">expand_grid</span>(</span>
@@ -4141,10 +4153,10 @@ Figure&nbsp;65: DRESS F1 change in preschoolers with ‘caregiver’ reference.
 <div id="fig-comb-plot" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-comb-plot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-comb-plot-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-78" title="Figure&nbsp;66: FLEECE, DRESS, KIT F1 and KIT F2, plotted with ‘caregiver’ reference level (Figure 5 in paper)."><img src="SM2_modelling_files/figure-html/fig-comb-plot-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-comb-plot-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-79" title="Figure&nbsp;67: FLEECE, DRESS, KIT F1 and KIT F2, plotted with ‘caregiver’ reference level (Figure 5 in paper)."><img src="SM2_modelling_files/figure-html/fig-comb-plot-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-comb-plot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;66: FLEECE, DRESS, KIT F1 and KIT F2, plotted with ‘caregiver’ reference level (Figure 5 in paper).
+Figure&nbsp;67: FLEECE, DRESS, KIT F1 and KIT F2, plotted with ‘caregiver’ reference level (Figure 5 in paper).
 </figcaption>
 </figure>
 </div>
@@ -4388,10 +4400,10 @@ Figure&nbsp;66: FLEECE, DRESS, KIT F1 and KIT F2, plotted with ‘caregiver’ r
 <div id="fig-vs-all-preschoolers" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-vs-all-preschoolers-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-vs-all-preschoolers-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-79" title="Figure&nbsp;67: Model predictions from age 4;2 to 5 with reference points from QuakeBox corpus. (Figure 4 in paper). 70% and 90% credible intervals are plotted."><img src="SM2_modelling_files/figure-html/fig-vs-all-preschoolers-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-vs-all-preschoolers-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-80" title="Figure&nbsp;68: Model predictions from age 4;2 to 5 with reference points from QuakeBox corpus. (Figure 4 in paper). 70% and 90% credible intervals are plotted."><img src="SM2_modelling_files/figure-html/fig-vs-all-preschoolers-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-vs-all-preschoolers-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;67: Model predictions from age 4;2 to 5 with reference points from QuakeBox corpus. (Figure 4 in paper). 70% and 90% credible intervals are plotted.
+Figure&nbsp;68: Model predictions from age 4;2 to 5 with reference points from QuakeBox corpus. (Figure 4 in paper). 70% and 90% credible intervals are plotted.
 </figcaption>
 </figure>
 </div>
@@ -4502,10 +4514,10 @@ Figure&nbsp;67: Model predictions from age 4;2 to 5 with reference points from Q
 <div id="fig-storyteller" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-storyteller-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-storyteller-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-80" title="Figure&nbsp;68: Vowel space with story teller mean productions for each vowel and vowel space triangles added for the storyteller, putative caregivers, and the youngest preschoolers in the plot (4;2). This is Figure 9 in the paper."><img src="SM2_modelling_files/figure-html/fig-storyteller-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-storyteller-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-81" title="Figure&nbsp;69: Vowel space with story teller mean productions for each vowel and vowel space triangles added for the storyteller, putative caregivers, and the youngest preschoolers in the plot (4;2). This is Figure 9 in the paper."><img src="SM2_modelling_files/figure-html/fig-storyteller-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-storyteller-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;68: Vowel space with story teller mean productions for each vowel and vowel space triangles added for the storyteller, putative caregivers, and the youngest preschoolers in the plot (4;2). This is Figure 9 in the paper.
+Figure&nbsp;69: Vowel space with story teller mean productions for each vowel and vowel space triangles added for the storyteller, putative caregivers, and the youngest preschoolers in the plot (4;2). This is Figure 9 in the paper.
 </figcaption>
 </figure>
 </div>
@@ -4517,9 +4529,9 @@ Figure&nbsp;68: Vowel space with story teller mean productions for each vowel an
 <h1 data-number="7"><span class="header-section-number">7</span> Additional tests</h1>
 <section id="longitudinal-models" class="level2 page-columns page-full" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="longitudinal-models"><span class="header-section-number">7.1</span> Longitudinal models</h2>
-<p>Each model, applied to the preschoolers, has already been compared with the data viewed longitudinally, with mixed results (e.g. <a href="#fig-dress-long-test" class="quarto-xref">Figure&nbsp;7</a>).</p>
+<p>Each model, applied to the preschoolers, has already been compared with the data viewed longitudinally, with mixed results (e.g. <a href="#fig-dress-long-test" class="quarto-xref">Figure&nbsp;8</a>).</p>
 <p>But let’s try a modelling approach which foregrounds the longitudinal nature of the data. This one will use ‘collect’ as the primary explanatory variable rather than age. This provides another way to approach the data longitudinally, which we can compare with the results presented above.</p>
-<p>We’ll just do this for the four variables highlighted in <a href="#fig-comb-plot" class="quarto-xref">Figure&nbsp;66</a>.</p>
+<p>We’ll just do this for the four variables highlighted in <a href="#fig-comb-plot" class="quarto-xref">Figure&nbsp;67</a>.</p>
 <section id="dress-f1" class="level3 page-columns page-full" data-number="7.1.1">
 <h3 data-number="7.1.1" class="anchored" data-anchor-id="dress-f1"><span class="header-section-number">7.1.1</span> <span class="smallcaps">dress</span> F1</h3>
 <div class="cell">
@@ -4579,16 +4591,16 @@ Figure&nbsp;68: Vowel space with story teller mean productions for each vowel an
 <div id="fig-collect-dress" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-collect-dress-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-collect-dress-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-81" title="Figure&nbsp;69: Mean DRESS F1 formant values across four collection points for preschoolers with at least two collection points."><img src="SM2_modelling_files/figure-html/fig-collect-dress-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-collect-dress-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-82" title="Figure&nbsp;70: Mean DRESS F1 formant values across four collection points for preschoolers with at least two collection points."><img src="SM2_modelling_files/figure-html/fig-collect-dress-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-collect-dress-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;69: Mean DRESS F1 formant values across four collection points for preschoolers with at least two collection points.
+Figure&nbsp;70: Mean DRESS F1 formant values across four collection points for preschoolers with at least two collection points.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-collect-dress" class="quarto-xref">Figure&nbsp;69</a> suggests a wide range of values at collection point two, tightening at three, and then raising (in the vowel space) at point four.</p>
+<p><a href="#fig-collect-dress" class="quarto-xref">Figure&nbsp;70</a> suggests a wide range of values at collection point two, tightening at three, and then raising (in the vowel space) at point four.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb179"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb179-1"><a href="#cb179-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(dress_f1_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -4649,16 +4661,16 @@ Figure&nbsp;69: Mean DRESS F1 formant values across four collection points for p
 <div id="fig-dress-f1-collect-preds" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-f1-collect-preds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-f1-collect-preds-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-82" title="Figure&nbsp;70: Model predictions for DRESS F1 at four collects for participants with at least two collection points. 90% credible intervals plotted."><img src="SM2_modelling_files/figure-html/fig-dress-f1-collect-preds-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-f1-collect-preds-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-83" title="Figure&nbsp;71: Model predictions for DRESS F1 at four collects for participants with at least two collection points. 90% credible intervals plotted."><img src="SM2_modelling_files/figure-html/fig-dress-f1-collect-preds-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-dress-f1-collect-preds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;70: Model predictions for DRESS F1 at four collects for participants with at least two collection points. 90% credible intervals plotted.
+Figure&nbsp;71: Model predictions for DRESS F1 at four collects for participants with at least two collection points. 90% credible intervals plotted.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-dress-f1-collect-preds" class="quarto-xref">Figure&nbsp;70</a> suggests rising in the vowel space for female preschoolers between collection points three and four, but nothing much else. This is more-or-less consistent with our age based model for the female preschoolers. The across-the-board rising in the vowel space we see for males is not borne out. But there are only four male preschoolers here, so this should not worry us massively.</p>
+<p><a href="#fig-dress-f1-collect-preds" class="quarto-xref">Figure&nbsp;71</a> suggests rising in the vowel space for female preschoolers between collection points three and four, but nothing much else. This is more-or-less consistent with our age based model for the female preschoolers. The across-the-board rising in the vowel space we see for males is not borne out. But there are only four male preschoolers here, so this should not worry us massively.</p>
 </section>
 <section id="fleece-f1" class="level3 page-columns page-full" data-number="7.1.2">
 <h3 data-number="7.1.2" class="anchored" data-anchor-id="fleece-f1"><span class="header-section-number">7.1.2</span> <span class="smallcaps">fleece</span> F1</h3>
@@ -4679,16 +4691,16 @@ Figure&nbsp;70: Model predictions for DRESS F1 at four collects for participants
 <div id="fig-collect-fleece" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-collect-fleece-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-collect-fleece-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-83" title="Figure&nbsp;71: Mean FLEECE F1 formant values across four collection points for preschoolers with at least two collection points"><img src="SM2_modelling_files/figure-html/fig-collect-fleece-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-collect-fleece-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-84" title="Figure&nbsp;72: Mean FLEECE F1 formant values across four collection points for preschoolers with at least two collection points"><img src="SM2_modelling_files/figure-html/fig-collect-fleece-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-collect-fleece-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;71: Mean FLEECE F1 formant values across four collection points for preschoolers with at least two collection points
+Figure&nbsp;72: Mean FLEECE F1 formant values across four collection points for preschoolers with at least two collection points
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-collect-fleece" class="quarto-xref">Figure&nbsp;71</a> is a similar story to <a href="#fig-collect-dress" class="quarto-xref">Figure&nbsp;69</a>. Some kind of stability between two and three and an increase at four. Note also that the three of the males start very low in the vowel space at time two then increase at time three.</p>
+<p><a href="#fig-collect-fleece" class="quarto-xref">Figure&nbsp;72</a> is a similar story to <a href="#fig-collect-dress" class="quarto-xref">Figure&nbsp;70</a>. Some kind of stability between two and three and an increase at four. Note also that the three of the males start very low in the vowel space at time two then increase at time three.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb184"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb184-1"><a href="#cb184-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fleece_f1_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -4749,10 +4761,10 @@ Figure&nbsp;71: Mean FLEECE F1 formant values across four collection points for 
 <div id="fig-fleece-f1-collect-preds" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-fleece-f1-collect-preds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-fleece-f1-collect-preds-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-84" title="Figure&nbsp;72: Model predictions for FLEECE F1 at four collects for participants with at least two collection points. 90% credible intervals plotted."><img src="SM2_modelling_files/figure-html/fig-fleece-f1-collect-preds-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-fleece-f1-collect-preds-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-85" title="Figure&nbsp;73: Model predictions for FLEECE F1 at four collects for participants with at least two collection points. 90% credible intervals plotted."><img src="SM2_modelling_files/figure-html/fig-fleece-f1-collect-preds-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-fleece-f1-collect-preds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;72: Model predictions for FLEECE F1 at four collects for participants with at least two collection points. 90% credible intervals plotted.
+Figure&nbsp;73: Model predictions for FLEECE F1 at four collects for participants with at least two collection points. 90% credible intervals plotted.
 </figcaption>
 </figure>
 </div>
@@ -4779,10 +4791,10 @@ Figure&nbsp;72: Model predictions for FLEECE F1 at four collects for participant
 <div id="fig-collect-kit" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-collect-kit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-collect-kit-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-85" title="Figure&nbsp;73: Mean KIT F1 formant values across four collection points for preschoolers with at least two collection points"><img src="SM2_modelling_files/figure-html/fig-collect-kit-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-collect-kit-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-86" title="Figure&nbsp;74: Mean KIT F1 formant values across four collection points for preschoolers with at least two collection points"><img src="SM2_modelling_files/figure-html/fig-collect-kit-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-collect-kit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;73: Mean KIT F1 formant values across four collection points for preschoolers with at least two collection points
+Figure&nbsp;74: Mean KIT F1 formant values across four collection points for preschoolers with at least two collection points
 </figcaption>
 </figure>
 </div>
@@ -4849,16 +4861,16 @@ Figure&nbsp;73: Mean KIT F1 formant values across four collection points for pre
 <div id="fig-kit-f1-collect-preds" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-f1-collect-preds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-f1-collect-preds-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-86" title="Figure&nbsp;74: Model predictions for KIT F1 at four collects for participants with at least two collection points. 90% credible intervals plotted."><img src="SM2_modelling_files/figure-html/fig-kit-f1-collect-preds-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-f1-collect-preds-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-87" title="Figure&nbsp;75: Model predictions for KIT F1 at four collects for participants with at least two collection points. 90% credible intervals plotted."><img src="SM2_modelling_files/figure-html/fig-kit-f1-collect-preds-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-kit-f1-collect-preds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;74: Model predictions for KIT F1 at four collects for participants with at least two collection points. 90% credible intervals plotted.
+Figure&nbsp;75: Model predictions for KIT F1 at four collects for participants with at least two collection points. 90% credible intervals plotted.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>The broad pattern in <a href="#fig-kit-f1-collect-preds" class="quarto-xref">Figure&nbsp;74</a> is a small lowering in the vowel space for female preschoolers and no clear pattern in the males. This is broadly consistent with the patterns identified in the age-based models.</p>
+<p>The broad pattern in <a href="#fig-kit-f1-collect-preds" class="quarto-xref">Figure&nbsp;75</a> is a small lowering in the vowel space for female preschoolers and no clear pattern in the males. This is broadly consistent with the patterns identified in the age-based models.</p>
 </section>
 <section id="kit-f2" class="level3 page-columns page-full" data-number="7.1.4">
 <h3 data-number="7.1.4" class="anchored" data-anchor-id="kit-f2"><span class="header-section-number">7.1.4</span> <span class="smallcaps">kit</span> F2</h3>
@@ -4889,16 +4901,16 @@ Figure&nbsp;74: Model predictions for KIT F1 at four collects for participants w
 <div id="fig-collect-kit-f2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-collect-kit-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-collect-kit-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-87" title="Figure&nbsp;75: Mean KIT F2 formant values across four collection points for preschoolers with at least two collection points"><img src="SM2_modelling_files/figure-html/fig-collect-kit-f2-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-collect-kit-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-88" title="Figure&nbsp;76: Mean KIT F2 formant values across four collection points for preschoolers with at least two collection points"><img src="SM2_modelling_files/figure-html/fig-collect-kit-f2-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-collect-kit-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;75: Mean KIT F2 formant values across four collection points for preschoolers with at least two collection points
+Figure&nbsp;76: Mean KIT F2 formant values across four collection points for preschoolers with at least two collection points
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-collect-kit-f2" class="quarto-xref">Figure&nbsp;75</a> suggests backing for male preschoolers, and some kind of tighter clustering for female preschoolers by the time they hit collection point four.</p>
+<p><a href="#fig-collect-kit-f2" class="quarto-xref">Figure&nbsp;76</a> suggests backing for male preschoolers, and some kind of tighter clustering for female preschoolers by the time they hit collection point four.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb194"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb194-1"><a href="#cb194-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(kit_f2_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -4959,16 +4971,16 @@ Figure&nbsp;75: Mean KIT F2 formant values across four collection points for pre
 <div id="fig-kit-f2-collect-preds" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-f2-collect-preds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-f2-collect-preds-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-88" title="Figure&nbsp;76: Model predictions for KIT F2 at four collects for participants with at least two collection points. 90% credible intervals plotted."><img src="SM2_modelling_files/figure-html/fig-kit-f2-collect-preds-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-f2-collect-preds-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-89" title="Figure&nbsp;77: Model predictions for KIT F2 at four collects for participants with at least two collection points. 90% credible intervals plotted."><img src="SM2_modelling_files/figure-html/fig-kit-f2-collect-preds-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-kit-f2-collect-preds-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;76: Model predictions for KIT F2 at four collects for participants with at least two collection points. 90% credible intervals plotted.
+Figure&nbsp;77: Model predictions for KIT F2 at four collects for participants with at least two collection points. 90% credible intervals plotted.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>Interestingly, <a href="#fig-kit-f2-collect-preds" class="quarto-xref">Figure&nbsp;76</a> does not seem to match the backing story we had for male speakers. In both cases, there’s nothing obvious going on.</p>
+<p>Interestingly, <a href="#fig-kit-f2-collect-preds" class="quarto-xref">Figure&nbsp;77</a> does not seem to match the backing story we had for male speakers. In both cases, there’s nothing obvious going on.</p>
 </section>
 </section>
 <section id="non-imputed-analysis" class="level2 page-columns page-full" data-number="7.2">
@@ -5086,16 +5098,16 @@ Figure&nbsp;76: Model predictions for KIT F2 at four collects for participants w
 <div id="fig-dress-sub-f1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-dress-sub-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-dress-sub-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-89" title="Figure&nbsp;77: DRESS F1 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals."><img src="SM2_modelling_files/figure-html/fig-dress-sub-f1-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-dress-sub-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-90" title="Figure&nbsp;78: DRESS F1 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals."><img src="SM2_modelling_files/figure-html/fig-dress-sub-f1-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-dress-sub-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;77: DRESS F1 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals.
+Figure&nbsp;78: DRESS F1 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>We get a broadly similar pattern to our models with imputed data (<a href="#fig-dress-mod-plots" class="quarto-xref">Figure&nbsp;10</a>). The vowel is going up in the vowel space. We cannot directly compare the normalised formant values with those of the community or the imputed preschooler values as they are normalised with a different vowel set.</p>
+<p>We get a broadly similar pattern to our models with imputed data (<a href="#fig-dress-mod-plots" class="quarto-xref">Figure&nbsp;11</a>). The vowel is going up in the vowel space. We cannot directly compare the normalised formant values with those of the community or the imputed preschooler values as they are normalised with a different vowel set.</p>
 </section>
 <section id="fleece-f1-1" class="level3 page-columns page-full" data-number="7.2.2">
 <h3 data-number="7.2.2" class="anchored" data-anchor-id="fleece-f1-1"><span class="header-section-number">7.2.2</span> <span class="smallcaps">fleece</span> F1</h3>
@@ -5184,16 +5196,16 @@ Figure&nbsp;77: DRESS F1 by age estimated without imputation. Both show gradual 
 <div id="fig-fleece-sub-f1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-fleece-sub-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-fleece-sub-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-90" title="Figure&nbsp;78: FLEECE F1 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals."><img src="SM2_modelling_files/figure-html/fig-fleece-sub-f1-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-fleece-sub-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-91" title="Figure&nbsp;79: FLEECE F1 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals."><img src="SM2_modelling_files/figure-html/fig-fleece-sub-f1-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-fleece-sub-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;78: FLEECE F1 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals.
+Figure&nbsp;79: FLEECE F1 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-fleece-sub-f1" class="quarto-xref">Figure&nbsp;78</a> is much more alarming for our overall story, and is referenced in the paper. If anything, the vowel lowers in the vowel space for both male and female preschoolers, although not by much and with very wide 90% credible intervals. There are a few factors which could explain the discrepancy. We have not carried out a detailed study of normalisation with only five vowels, for instance. On the other hand, our imputation method should not bias us in the direction of <em>move</em> movement with age. We leave this here as warning against over interpreting the apparent extreme movements in <span class="smallcaps">fleece</span> in the models reported above.</p>
+<p><a href="#fig-fleece-sub-f1" class="quarto-xref">Figure&nbsp;79</a> is much more alarming for our overall story, and is referenced in the paper. If anything, the vowel lowers in the vowel space for both male and female preschoolers, although not by much and with very wide 90% credible intervals. There are a few factors which could explain the discrepancy. We have not carried out a detailed study of normalisation with only five vowels, for instance. On the other hand, our imputation method should not bias us in the direction of <em>move</em> movement with age. We leave this here as warning against over interpreting the apparent extreme movements in <span class="smallcaps">fleece</span> in the models reported above.</p>
 </section>
 <section id="kit-f1-1" class="level3 page-columns page-full" data-number="7.2.3">
 <h3 data-number="7.2.3" class="anchored" data-anchor-id="kit-f1-1"><span class="header-section-number">7.2.3</span> <span class="smallcaps">kit</span> F1</h3>
@@ -5282,16 +5294,16 @@ Figure&nbsp;78: FLEECE F1 by age estimated without imputation. Both show gradual
 <div id="fig-kit-sub-f1" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-sub-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-sub-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-91" title="Figure&nbsp;79: KIT F1 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals."><img src="SM2_modelling_files/figure-html/fig-kit-sub-f1-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-sub-f1-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-92" title="Figure&nbsp;80: KIT F1 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals."><img src="SM2_modelling_files/figure-html/fig-kit-sub-f1-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-kit-sub-f1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;79: KIT F1 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals.
+Figure&nbsp;80: KIT F1 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-kit-sub-f1" class="quarto-xref">Figure&nbsp;79</a> is interestingly different from <a href="#fig-kit-modplot-f1" class="quarto-xref">Figure&nbsp;20</a>. We see a lower in the vowel space for both female and male preschoolers. Both have means estimated to be outside of the 90% credible interval for the youngest speakers. If anything, this movement in the male preschoolers would make our story easier to tell.</p>
+<p><a href="#fig-kit-sub-f1" class="quarto-xref">Figure&nbsp;80</a> is interestingly different from <a href="#fig-kit-modplot-f1" class="quarto-xref">Figure&nbsp;21</a>. We see a lower in the vowel space for both female and male preschoolers. Both have means estimated to be outside of the 90% credible interval for the youngest speakers. If anything, this movement in the male preschoolers would make our story easier to tell.</p>
 </section>
 <section id="kit-f2-1" class="level3 page-columns page-full" data-number="7.2.4">
 <h3 data-number="7.2.4" class="anchored" data-anchor-id="kit-f2-1"><span class="header-section-number">7.2.4</span> <span class="smallcaps">kit</span> F2</h3>
@@ -5380,16 +5392,16 @@ Figure&nbsp;79: KIT F1 by age estimated without imputation. Both show gradual in
 <div id="fig-kit-sub-f2" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-kit-sub-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM2_modelling_files/figure-html/fig-kit-sub-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-92" title="Figure&nbsp;80: KIT F2 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals."><img src="SM2_modelling_files/figure-html/fig-kit-sub-f2-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM2_modelling_files/figure-html/fig-kit-sub-f2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-93" title="Figure&nbsp;81: KIT F2 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals."><img src="SM2_modelling_files/figure-html/fig-kit-sub-f2-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-kit-sub-f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;80: KIT F2 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals.
+Figure&nbsp;81: KIT F2 by age estimated without imputation. Both show gradual increases, but with very wide 90% credible intervals.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p><a href="#fig-kit-sub-f2" class="quarto-xref">Figure&nbsp;80</a> shows now clear evidence of any kind of movement in the vowel space (whereas we expect some backing in the male preschoolers). The credible intervals appear wide, but this is mostly a feature of the scale of the visualization.</p>
+<p><a href="#fig-kit-sub-f2" class="quarto-xref">Figure&nbsp;81</a> shows now clear evidence of any kind of movement in the vowel space (whereas we expect some backing in the male preschoolers). The credible intervals appear wide, but this is mostly a feature of the scale of the visualization.</p>
 </section>
 </section>
 </section>

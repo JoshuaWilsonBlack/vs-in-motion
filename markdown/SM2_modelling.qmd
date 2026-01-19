@@ -535,7 +535,6 @@ We take 100 draws from the prior and plot the distribution.
 ```{r}
 #| label: fig-prior-pc
 #| message: false
-#| eval: false
 prior_draws <- posterior_predict(dress_f1_prior_t, ndraws = 100)
 prior_draws <- prior_draws |> 
   t() |> 

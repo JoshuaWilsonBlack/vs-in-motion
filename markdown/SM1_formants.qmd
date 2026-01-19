@@ -2711,7 +2711,8 @@ participants_data <- vowels %>%
     gender = first(gender),
     ethnicity = first(ethnicity),
     home_language = first(home_language),
-    dob = first(dob)
+    dob = first(dob),
+    age = first(age)
   )
 
 participants_data %>% 
@@ -2774,6 +2775,21 @@ participants_data %>%
 
 We decided above to filter by English being one of the particpiants home 
 languages.
+
+Let's look at a distribution of ages at recording:
+``` {r fig-participant-ages, fig.cap = "Participants by age at recording."}
+participants_data %>% 
+  ggplot(
+    aes(
+      x = age
+    )
+  ) +
+  geom_histogram(stat="count") +
+  labs(title = "Participants by age at recording", x = "Age (months)") +
+  theme(
+    axis.text.x = element_text(angle = 90)
+  )
+```
 
 Finally, the distribution of birth dates:
 ``` {r fig-participant-birthdays, fig.cap = "Participants by date of birth."}

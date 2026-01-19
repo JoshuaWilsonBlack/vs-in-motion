@@ -15,22 +15,19 @@ _Under review_
 ### Abstract
 
 The New Zealand English (NZE) vowel system exhibits both variability and complex
-systematicity. Sound changes across the vowel system in NZE have been well
-documented for some time (e.g. Gordon et al. 2004). Recent work shows that
-vowels involved in the NZE short front vowel shift (i.e. TRAP, DRESS, & KIT)
-covary with other vowels (especially FLEECE and NURSE; see Brand et al. (2021))
-and that this covariation remains intact even as individual vowels in this
-cluster stabilise or change direction (Hurring et al. 2025). In this study, we
-explore what happens when children are acquiring their accent in such a complex
-environment. We do this by applying acoustic phonetic methods to a corpus of
+systematicity. Recent work shows that vowels involved in the NZE short front
+vowel shift (i.e. TRAP, DRESS, & KIT) covary with other vowels (especially
+FLEECE and NURSE; see Brand et al. (2021)) and that covariation remains intact
+even as individual vowels in this cluster stabilise or change direction (Hurring
+et al. 2025). We explore what happens when children acquire their accent in such
+a complex environment. We apply acoustic phonetic methods to a corpus of
 preschool children (n=124, 3;11-5;5) from Christchurch, New Zealand and a
 community corpus of adult talkers (n=345). We consider the vowels associated
-with this cluster of covariation which we call the Extended NZE Short Front
-Vowel Shift. We find that children produced more conservative vowels than
-expected, sometimes diverging from community changes in progress. We consider
-vernacular reorganisation, developmental effects, hyperarticulation, and priming
-as explanations for the patterns that we see in the children’s developing vowel
-spaces.
+with this cluster of covariation. We find that children produced more
+conservative vowels than expected, sometimes diverging from community changes in
+progress. Vernacular reorganisation, developmental effects, hyperarticulation,
+and priming are considered as explanations for the patterns we see in developing
+vowel spaces.
 
 ### How to use the GitHub repository
 
