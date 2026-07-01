@@ -9,7 +9,7 @@
 <meta name="author" content="Joshua Wilson Black">
 <meta name="author" content="Lynn Clark">
 <meta name="author" content="Gia Hurring">
-<meta name="dcterms.date" content="2026-01-19">
+<meta name="dcterms.date" content="2026-06-25">
 
 <title>SM1: Formant tracking, preprocessing, and normalisation</title>
 <style>
@@ -213,7 +213,7 @@ window.Quarto = {
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">19 January 2026</p>
+        <p class="date">25 June 2026</p>
       </div>
     </div>
     
@@ -267,6 +267,7 @@ window.Quarto = {
   <li><a href="#single-parameter-log-mean-normalisation" id="toc-single-parameter-log-mean-normalisation" class="nav-link" data-scroll-target="#single-parameter-log-mean-normalisation"><span class="header-section-number">7.2</span> Single-parameter log-mean normalisation</a></li>
   <li><a href="#two-parameter-log-mean" id="toc-two-parameter-log-mean" class="nav-link" data-scroll-target="#two-parameter-log-mean"><span class="header-section-number">7.3</span> Two-parameter log-mean</a></li>
   <li><a href="#sec-lob2" id="toc-sec-lob2" class="nav-link" data-scroll-target="#sec-lob2"><span class="header-section-number">7.4</span> Lobanov with Imputation</a></li>
+  <li><a href="#post-normalisation-data-summary" id="toc-post-normalisation-data-summary" class="nav-link" data-scroll-target="#post-normalisation-data-summary"><span class="header-section-number">7.5</span> Post-normalisation Data Summary</a></li>
   </ul></li>
   <li><a href="#merge-and-export-data" id="toc-merge-and-export-data" class="nav-link" data-scroll-target="#merge-and-export-data"><span class="header-section-number">8</span> Merge and Export Data</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
@@ -2972,7 +2973,7 @@ small-caps;">schwa</span> and tokens from the words “hana”, “hanas”, and
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a>vowels <span class="ot">&lt;-</span> vowels <span class="sc">%&gt;%</span> </span>
 <span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
-<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(F1_50)</span>
+<span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span><span class="fu">is.na</span>(F1_50) <span class="co"># NA cases should be the same for both formants.</span></span>
 <span id="cb71-4"><a href="#cb71-4" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>na_count <span class="ot">&lt;-</span> <span class="fu">nrow</span>(vowels)</span>
@@ -3727,7 +3728,7 @@ small-caps;">fleece</span> tokens with a very high actual F2, we sometimes end u
 <span id="cb95-3"><a href="#cb95-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">high_pitch =</span> meanPitch <span class="sc">&gt;</span> <span class="fu">quantile</span>(vowels<span class="sc">$</span>meanPitch, <span class="fl">0.90</span>, <span class="at">na.rm =</span> T)</span>
 <span id="cb95-4"><a href="#cb95-4" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Finally, we filter out very extreme F1 values.</p>
+<p>Finally, we filter out very extreme F1 values. In cases with extreme F1 values, F2 will almost certainly be unreliable.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb96"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a>vowels <span class="ot">&lt;-</span> vowels <span class="sc">%&gt;%</span> </span>
 <span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(F1_50 <span class="sc">&lt;</span> <span class="dv">1500</span> <span class="sc">&amp;</span> F1_50 <span class="sc">&gt;</span> <span class="dv">350</span>)</span>
@@ -3735,8 +3736,17 @@ small-caps;">fleece</span> tokens with a very high actual F2, we sometimes end u
 <span id="cb96-4"><a href="#cb96-4" aria-hidden="true" tabindex="-1"></a>extreme_count <span class="ot">&lt;-</span> <span class="fu">nrow</span>(vowels)</span>
 <span id="cb96-5"><a href="#cb96-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 9289</span></span>
 <span id="cb96-6"><a href="#cb96-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb96-7"><a href="#cb96-7" aria-hidden="true" tabindex="-1"></a>f1_extreme_count <span class="ot">&lt;-</span> f1_sd_count <span class="sc">-</span> (na_count <span class="sc">-</span> extreme_count)</span>
-<span id="cb96-8"><a href="#cb96-8" aria-hidden="true" tabindex="-1"></a>f2_extreme_count <span class="ot">&lt;-</span> f2_sd_count <span class="sc">-</span> (na_count <span class="sc">-</span> extreme_count)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb96-7"><a href="#cb96-7" aria-hidden="true" tabindex="-1"></a>f1_extreme_count <span class="ot">&lt;-</span> vowels <span class="sc">|&gt;</span> </span>
+<span id="cb96-8"><a href="#cb96-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb96-9"><a href="#cb96-9" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span>high_f1_bandwidth, <span class="sc">!</span>F1_outlier</span>
+<span id="cb96-10"><a href="#cb96-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb96-11"><a href="#cb96-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>()</span>
+<span id="cb96-12"><a href="#cb96-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb96-13"><a href="#cb96-13" aria-hidden="true" tabindex="-1"></a>f2_extreme_count <span class="ot">&lt;-</span> vowels <span class="sc">|&gt;</span> </span>
+<span id="cb96-14"><a href="#cb96-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb96-15"><a href="#cb96-15" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span>high_f2_bandwidth, <span class="sc">!</span>F2_outlier</span>
+<span id="cb96-16"><a href="#cb96-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span> </span>
+<span id="cb96-17"><a href="#cb96-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We’re left with 8752 tokens.</p>
 </section>
@@ -4506,7 +4516,7 @@ Figure&nbsp;25: Centres by participants.
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-filtering-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div id="htmlwidget-c7bde44826f504a6c39b" style="width:100%;height:780px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-c7bde44826f504a6c39b">{"x":{"diagram":"graph TB\n\nA(Extract data from LaBB-CAT: 16045 tokens) --> \nB(Home language: 15196 tokens)\nB --> C(FOOT, SCHWA and HANA: 11841 tokens)\nC --> D(Hesitations, and missing words: 11827 tokens)\nD --> E(Preceeding liquids: 11100 tokens)\nE --> F(FastTrack errors: 9285 tokens)\nF --> Q(Noisy tokens: 9162 tokens)\nQ --> M(Long tokens: 8943 tokens)\nM --> G(F1: high bandwidth: 8245 tokens)\nM --> H(F2: high bandwidth: 8245 tokens)\nG --> I(F1: SD filter: 7799 tokens)\nH --> J(F2: SD filter: 7735 tokens)\nI --> K(F1: extremes: 7266 tokens)\nJ --> L(F2: extremes: 7202 tokens)"},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-c7bde44826f504a6c39b">{"x":{"diagram":"graph TB\n\nA(Extract data from LaBB-CAT: 16045 tokens) --> \nB(Home language: 15196 tokens)\nB --> C(FOOT, SCHWA and HANA: 11841 tokens)\nC --> D(Hesitations, and missing words: 11827 tokens)\nD --> E(Preceeding liquids: 11100 tokens)\nE --> F(FastTrack errors: 9285 tokens)\nF --> Q(Noisy tokens: 9162 tokens)\nQ --> M(Long tokens: 8943 tokens)\nM --> G(F1: high bandwidth: 8245 tokens)\nM --> H(F2: high bandwidth: 8245 tokens)\nG --> I(F1: SD filter: 7799 tokens)\nH --> J(F2: SD filter: 7735 tokens)\nI --> K(F1: extremes: 7723 tokens)\nJ --> L(F2: extremes: 7586 tokens)"},"evals":[],"jsHooks":[]}</script>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-filtering-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;26: Data filtering flow chart.
@@ -5612,9 +5622,22 @@ Figure&nbsp;38: Distribution of counts of vowel types imputed for each speaker.
 <span id="cb149-19"><a href="#cb149-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
 <span id="cb149-20"><a href="#cb149-20" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span>(pc <span class="sc">%in%</span> to_remove<span class="sc">$</span>pc)</span>
 <span id="cb149-21"><a href="#cb149-21" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb149-22"><a href="#cb149-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>pc)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb149-22"><a href="#cb149-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>pc)</span>
+<span id="cb149-23"><a href="#cb149-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb149-24"><a href="#cb149-24" aria-hidden="true" tabindex="-1"></a>f1_lob2_count <span class="ot">&lt;-</span> <span class="fu">nrow</span>(</span>
+<span id="cb149-25"><a href="#cb149-25" aria-hidden="true" tabindex="-1"></a>  lob2_imputed <span class="sc">%&gt;%</span> </span>
+<span id="cb149-26"><a href="#cb149-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>high_f1_bandwidth, <span class="sc">!</span>F1_outlier, <span class="sc">!</span><span class="fu">is.na</span>(F1_lob2))</span>
+<span id="cb149-27"><a href="#cb149-27" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb149-28"><a href="#cb149-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb149-29"><a href="#cb149-29" aria-hidden="true" tabindex="-1"></a>f2_lob2_count <span class="ot">&lt;-</span> <span class="fu">nrow</span>(</span>
+<span id="cb149-30"><a href="#cb149-30" aria-hidden="true" tabindex="-1"></a>  lob2_imputed <span class="sc">%&gt;%</span> </span>
+<span id="cb149-31"><a href="#cb149-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>high_f2_bandwidth, <span class="sc">!</span>F2_outlier)</span>
+<span id="cb149-32"><a href="#cb149-32" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We remove 35 recordings.</p>
+</section>
+<section id="post-normalisation-data-summary" class="level2 page-columns page-full" data-number="7.5">
+<h2 data-number="7.5" class="anchored" data-anchor-id="post-normalisation-data-summary"><span class="header-section-number">7.5</span> Post-normalisation Data Summary</h2>
 <p>Let’s have a look at the resulting data set.</p>
 <div class="cell page-columns page-full">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb150"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb150-1"><a href="#cb150-1" aria-hidden="true" tabindex="-1"></a>lob2_imputed <span class="sc">%&gt;%</span> </span>
@@ -5641,81 +5664,310 @@ Figure&nbsp;39: Tokens after Lobanov 2.0 normalisation with imputation.
 </div>
 </div>
 </div>
+<p>We also regenerate the filtering flow chart to include the post-normalisation filtering of participant collection points.</p>
+<div class="cell page-columns page-full">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb151"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb151-1"><a href="#cb151-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Flow chart generated using the DiagrammeR package.</span></span>
+<span id="cb151-2"><a href="#cb151-2" aria-hidden="true" tabindex="-1"></a>flow_chart <span class="ot">&lt;-</span> <span class="fu">mermaid</span>(</span>
+<span id="cb151-3"><a href="#cb151-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">diagram =</span> <span class="fu">glue</span>(<span class="st">"</span></span>
+<span id="cb151-4"><a href="#cb151-4" aria-hidden="true" tabindex="-1"></a><span class="st">  graph TB</span></span>
+<span id="cb151-5"><a href="#cb151-5" aria-hidden="true" tabindex="-1"></a><span class="st">  </span></span>
+<span id="cb151-6"><a href="#cb151-6" aria-hidden="true" tabindex="-1"></a><span class="st">  A(Extract data from LaBB-CAT: {initial_count} tokens) --&gt; </span></span>
+<span id="cb151-7"><a href="#cb151-7" aria-hidden="true" tabindex="-1"></a><span class="st">  B(Home language: {language_count} tokens)</span></span>
+<span id="cb151-8"><a href="#cb151-8" aria-hidden="true" tabindex="-1"></a><span class="st">  B --&gt; C(FOOT, SCHWA and HANA: {word_count} tokens)</span></span>
+<span id="cb151-9"><a href="#cb151-9" aria-hidden="true" tabindex="-1"></a><span class="st">  C --&gt; D(Hesitations, and missing words: {na_word_count} tokens)</span></span>
+<span id="cb151-10"><a href="#cb151-10" aria-hidden="true" tabindex="-1"></a><span class="st">  D --&gt; E(Preceeding liquids: {liquid_count} tokens)</span></span>
+<span id="cb151-11"><a href="#cb151-11" aria-hidden="true" tabindex="-1"></a><span class="st">  E --&gt; F(FastTrack errors: {na_count} tokens)</span></span>
+<span id="cb151-12"><a href="#cb151-12" aria-hidden="true" tabindex="-1"></a><span class="st">  F --&gt; Q(Noisy tokens: {noise_count} tokens)</span></span>
+<span id="cb151-13"><a href="#cb151-13" aria-hidden="true" tabindex="-1"></a><span class="st">  Q --&gt; M(Long tokens: {length_count} tokens)</span></span>
+<span id="cb151-14"><a href="#cb151-14" aria-hidden="true" tabindex="-1"></a><span class="st">  M --&gt; G(F1: high bandwidth: {f1_band_count} tokens)</span></span>
+<span id="cb151-15"><a href="#cb151-15" aria-hidden="true" tabindex="-1"></a><span class="st">  M --&gt; H(F2: high bandwidth: {f2_band_count} tokens)</span></span>
+<span id="cb151-16"><a href="#cb151-16" aria-hidden="true" tabindex="-1"></a><span class="st">  G --&gt; I(F1: SD filter: {f1_sd_count} tokens)</span></span>
+<span id="cb151-17"><a href="#cb151-17" aria-hidden="true" tabindex="-1"></a><span class="st">  H --&gt; J(F2: SD filter: {f2_sd_count} tokens)</span></span>
+<span id="cb151-18"><a href="#cb151-18" aria-hidden="true" tabindex="-1"></a><span class="st">  I --&gt; K(F1: extremes: {f1_extreme_count} tokens)</span></span>
+<span id="cb151-19"><a href="#cb151-19" aria-hidden="true" tabindex="-1"></a><span class="st">  J --&gt; L(F2: extremes: {f2_extreme_count} tokens)</span></span>
+<span id="cb151-20"><a href="#cb151-20" aria-hidden="true" tabindex="-1"></a><span class="st">  K --&gt; O(F1: low-token speakers: {f1_lob2_count} tokens)</span></span>
+<span id="cb151-21"><a href="#cb151-21" aria-hidden="true" tabindex="-1"></a><span class="st">  L --&gt; P(F2: low-token speakers: {f2_lob2_count} tokens)</span></span>
+<span id="cb151-22"><a href="#cb151-22" aria-hidden="true" tabindex="-1"></a><span class="st">  "</span>),</span>
+<span id="cb151-23"><a href="#cb151-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">width =</span> <span class="dv">800</span></span>
+<span id="cb151-24"><a href="#cb151-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb151-25"><a href="#cb151-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb151-26"><a href="#cb151-26" aria-hidden="true" tabindex="-1"></a>flow_chart</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fig-filtering-flow-2" class="cell-output-display quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
+<figure class="quarto-float quarto-float-fig figure page-columns page-full">
+<div aria-describedby="fig-filtering-flow-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div id="htmlwidget-5fe7654ab1cf57c73686" style="width:100%;height:780px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-5fe7654ab1cf57c73686">{"x":{"diagram":"graph TB\n\nA(Extract data from LaBB-CAT: 16045 tokens) --> \nB(Home language: 15196 tokens)\nB --> C(FOOT, SCHWA and HANA: 11841 tokens)\nC --> D(Hesitations, and missing words: 11827 tokens)\nD --> E(Preceeding liquids: 11100 tokens)\nE --> F(FastTrack errors: 9285 tokens)\nF --> Q(Noisy tokens: 9162 tokens)\nQ --> M(Long tokens: 8943 tokens)\nM --> G(F1: high bandwidth: 8245 tokens)\nM --> H(F2: high bandwidth: 8245 tokens)\nG --> I(F1: SD filter: 7799 tokens)\nH --> J(F2: SD filter: 7735 tokens)\nI --> K(F1: extremes: 7723 tokens)\nJ --> L(F2: extremes: 7586 tokens)\nK --> O(F1: low-token speakers: 7541 tokens)\nL --> P(F2: low-token speakers: 7389 tokens)"},"evals":[],"jsHooks":[]}</script>
+</div>
+<figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-filtering-flow-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;40: Data filtering flow chart, after normalisation.
+</figcaption>
+</figure>
+</div>
+</div>
+<p>And now we generate the counts for the summary tables in the paper.</p>
+<p>Participant summary:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb152"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb152-1"><a href="#cb152-1" aria-hidden="true" tabindex="-1"></a>participants_collect <span class="ot">&lt;-</span> lob2_imputed <span class="sc">%&gt;%</span></span>
+<span id="cb152-2"><a href="#cb152-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(participant) <span class="sc">%&gt;%</span> </span>
+<span id="cb152-3"><a href="#cb152-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb152-4"><a href="#cb152-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">collection_points =</span> <span class="fu">n_distinct</span>(collect)</span>
+<span id="cb152-5"><a href="#cb152-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb152-6"><a href="#cb152-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(collection_points) <span class="sc">%&gt;%</span> </span>
+<span id="cb152-7"><a href="#cb152-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n_participants =</span> <span class="fu">n</span>())</span>
+<span id="cb152-8"><a href="#cb152-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb152-9"><a href="#cb152-9" aria-hidden="true" tabindex="-1"></a>participants_collect <span class="sc">%&gt;%</span> </span>
+<span id="cb152-10"><a href="#cb152-10" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">collection_points</th>
+<th style="text-align: right;">n_participants</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">58</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">47</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">15</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb153"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb153-1"><a href="#cb153-1" aria-hidden="true" tabindex="-1"></a>participants_data <span class="ot">&lt;-</span> lob2_imputed <span class="sc">%&gt;%</span> </span>
+<span id="cb153-2"><a href="#cb153-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(participant) <span class="sc">%&gt;%</span></span>
+<span id="cb153-3"><a href="#cb153-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb153-4"><a href="#cb153-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">gender =</span> <span class="fu">first</span>(gender),</span>
+<span id="cb153-5"><a href="#cb153-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">ethnicity =</span> <span class="fu">first</span>(ethnicity),</span>
+<span id="cb153-6"><a href="#cb153-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">home_language =</span> <span class="fu">first</span>(home_language),</span>
+<span id="cb153-7"><a href="#cb153-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">dob =</span> <span class="fu">first</span>(dob),</span>
+<span id="cb153-8"><a href="#cb153-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">age =</span> <span class="fu">first</span>(age)</span>
+<span id="cb153-9"><a href="#cb153-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb153-10"><a href="#cb153-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb153-11"><a href="#cb153-11" aria-hidden="true" tabindex="-1"></a>participants_data <span class="sc">|&gt;</span> </span>
+<span id="cb153-12"><a href="#cb153-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(gender)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 2
+  gender     n
+  &lt;chr&gt;  &lt;int&gt;
+1 F         60
+2 M         61</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb155"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb155-1"><a href="#cb155-1" aria-hidden="true" tabindex="-1"></a>participants_data <span class="sc">|&gt;</span> </span>
+<span id="cb155-2"><a href="#cb155-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(ethnicity)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5 × 2
+  ethnicity       n
+  &lt;chr&gt;       &lt;int&gt;
+1 Asian           5
+2 Māori          18
+3 NZ European    92
+4 Other           4
+5 Pasifika        2</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb157"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb157-1"><a href="#cb157-1" aria-hidden="true" tabindex="-1"></a><span class="co"># F1 counts.</span></span>
+<span id="cb157-2"><a href="#cb157-2" aria-hidden="true" tabindex="-1"></a>f1_counts <span class="ot">&lt;-</span> lob2_imputed <span class="sc">|&gt;</span> </span>
+<span id="cb157-3"><a href="#cb157-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>high_f1_bandwidth, <span class="sc">!</span>F1_outlier, <span class="sc">!</span><span class="fu">is.na</span>(F1_lob2)) <span class="sc">|&gt;</span> </span>
+<span id="cb157-4"><a href="#cb157-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(vowel) <span class="sc">|&gt;</span> </span>
+<span id="cb157-5"><a href="#cb157-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(vowel)</span>
+<span id="cb157-6"><a href="#cb157-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb157-7"><a href="#cb157-7" aria-hidden="true" tabindex="-1"></a>f1_counts</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 2
+   vowel       n
+   &lt;fct&gt;   &lt;int&gt;
+ 1 DRESS     905
+ 2 FLEECE   1087
+ 3 GOOSE     442
+ 4 KIT      1738
+ 5 LOT       671
+ 6 TRAP      783
+ 7 START     473
+ 8 STRUT     815
+ 9 THOUGHT   217
+10 NURSE     410</code></pre>
+</div>
+</div>
+<p>Total number of F2 tokens is 7541.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb159"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb159-1"><a href="#cb159-1" aria-hidden="true" tabindex="-1"></a><span class="co"># F2 counts.</span></span>
+<span id="cb159-2"><a href="#cb159-2" aria-hidden="true" tabindex="-1"></a>f2_counts <span class="ot">&lt;-</span> lob2_imputed <span class="sc">|&gt;</span> </span>
+<span id="cb159-3"><a href="#cb159-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>high_f2_bandwidth, <span class="sc">!</span>F2_outlier, <span class="sc">!</span><span class="fu">is.na</span>(F2_lob2)) <span class="sc">|&gt;</span> </span>
+<span id="cb159-4"><a href="#cb159-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(vowel) <span class="sc">|&gt;</span> </span>
+<span id="cb159-5"><a href="#cb159-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(vowel)</span>
+<span id="cb159-6"><a href="#cb159-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb159-7"><a href="#cb159-7" aria-hidden="true" tabindex="-1"></a>f2_counts</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 10 × 2
+   vowel       n
+   &lt;fct&gt;   &lt;int&gt;
+ 1 DRESS     861
+ 2 FLEECE    980
+ 3 GOOSE     406
+ 4 KIT      1601
+ 5 LOT       658
+ 6 TRAP      825
+ 7 START     554
+ 8 STRUT     893
+ 9 THOUGHT   210
+10 NURSE     401</code></pre>
+</div>
+</div>
+<p>Total number of F2 tokens is 7389.</p>
+<p>Let’s look at the age variables:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb161"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb161-1"><a href="#cb161-1" aria-hidden="true" tabindex="-1"></a>min_age <span class="ot">&lt;-</span> <span class="fu">min</span>(participants_data<span class="sc">$</span>age)</span>
+<span id="cb161-2"><a href="#cb161-2" aria-hidden="true" tabindex="-1"></a>min_years <span class="ot">&lt;-</span> min_age <span class="sc">%/%</span> <span class="dv">12</span></span>
+<span id="cb161-3"><a href="#cb161-3" aria-hidden="true" tabindex="-1"></a>min_months <span class="ot">&lt;-</span> min_age <span class="sc">%%</span> <span class="dv">12</span></span>
+<span id="cb161-4"><a href="#cb161-4" aria-hidden="true" tabindex="-1"></a><span class="fu">glue</span>(<span class="st">"min age: {min_years};{min_months}"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>min age: 3;11</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb163"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb163-1"><a href="#cb163-1" aria-hidden="true" tabindex="-1"></a>med_age <span class="ot">&lt;-</span> <span class="fu">median</span>(participants_data<span class="sc">$</span>age)</span>
+<span id="cb163-2"><a href="#cb163-2" aria-hidden="true" tabindex="-1"></a>med_years <span class="ot">&lt;-</span> med_age <span class="sc">%/%</span> <span class="dv">12</span></span>
+<span id="cb163-3"><a href="#cb163-3" aria-hidden="true" tabindex="-1"></a>med_months <span class="ot">&lt;-</span> med_age <span class="sc">%%</span> <span class="dv">12</span></span>
+<span id="cb163-4"><a href="#cb163-4" aria-hidden="true" tabindex="-1"></a><span class="fu">glue</span>(<span class="st">"median age: {med_years};{med_months}"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>median age: 4;4</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb165"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb165-1"><a href="#cb165-1" aria-hidden="true" tabindex="-1"></a>max_age <span class="ot">&lt;-</span> <span class="fu">max</span>(participants_data<span class="sc">$</span>age)</span>
+<span id="cb165-2"><a href="#cb165-2" aria-hidden="true" tabindex="-1"></a>max_years <span class="ot">&lt;-</span> max_age <span class="sc">%/%</span> <span class="dv">12</span></span>
+<span id="cb165-3"><a href="#cb165-3" aria-hidden="true" tabindex="-1"></a>max_months <span class="ot">&lt;-</span> max_age <span class="sc">%%</span> <span class="dv">12</span></span>
+<span id="cb165-4"><a href="#cb165-4" aria-hidden="true" tabindex="-1"></a><span class="fu">glue</span>(<span class="st">"max age: {max_years};{max_months}"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>max age: 5;5</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb167"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb167-1"><a href="#cb167-1" aria-hidden="true" tabindex="-1"></a>min_dob <span class="ot">&lt;-</span> <span class="fu">min</span>(participants_data<span class="sc">$</span>dob)</span>
+<span id="cb167-2"><a href="#cb167-2" aria-hidden="true" tabindex="-1"></a>min_dob</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "2015-01-11"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb169"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb169-1"><a href="#cb169-1" aria-hidden="true" tabindex="-1"></a>med_dob <span class="ot">&lt;-</span> <span class="fu">median</span>(participants_data<span class="sc">$</span>dob)</span>
+<span id="cb169-2"><a href="#cb169-2" aria-hidden="true" tabindex="-1"></a>med_dob</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "2016-10-03"</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb171"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb171-1"><a href="#cb171-1" aria-hidden="true" tabindex="-1"></a>max_dob <span class="ot">&lt;-</span> <span class="fu">max</span>(participants_data<span class="sc">$</span>dob)</span>
+<span id="cb171-2"><a href="#cb171-2" aria-hidden="true" tabindex="-1"></a>max_dob</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "2017-07-06"</code></pre>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb173"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb173-1"><a href="#cb173-1" aria-hidden="true" tabindex="-1"></a>participants_data <span class="sc">|&gt;</span> </span>
+<span id="cb173-2"><a href="#cb173-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(</span>
+<span id="cb173-3"><a href="#cb173-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(</span>
+<span id="cb173-4"><a href="#cb173-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> age</span>
+<span id="cb173-5"><a href="#cb173-5" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb173-6"><a href="#cb173-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb173-7"><a href="#cb173-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">fill =</span> <span class="st">"grey"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display page-columns page-full">
+<div id="fig-age-dens-postnorm" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
+<figure class="quarto-float quarto-float-fig figure page-columns page-full">
+<div aria-describedby="fig-age-dens-postnorm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="SM1_formants_files/figure-html/fig-age-dens-postnorm-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-344" title="Figure&nbsp;41: Distribution age ages after normalisation."><img src="SM1_formants_files/figure-html/fig-age-dens-postnorm-1.png" class="img-fluid figure-img" width="672"></a>
+</div>
+<figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-age-dens-postnorm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;41: Distribution age ages after normalisation.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
 </section>
 </section>
 <section id="merge-and-export-data" class="level1 page-columns page-full" data-number="8">
 <h1 data-number="8"><span class="header-section-number">8</span> Merge and Export Data</h1>
 <p>We merge the data together so that all normalisation methods are within the same data frame.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb151"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb151-1"><a href="#cb151-1" aria-hidden="true" tabindex="-1"></a>processed_vowels <span class="ot">&lt;-</span> vowels <span class="sc">%&gt;%</span> </span>
-<span id="cb151-2"><a href="#cb151-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb151-3"><a href="#cb151-3" aria-hidden="true" tabindex="-1"></a>    lob2_imputed <span class="sc">%&gt;%</span> </span>
-<span id="cb151-4"><a href="#cb151-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(MatchId, F1_lob2, F2_lob2)</span>
-<span id="cb151-5"><a href="#cb151-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb151-6"><a href="#cb151-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb151-7"><a href="#cb151-7" aria-hidden="true" tabindex="-1"></a>    lob2_sub_vowels <span class="sc">%&gt;%</span> </span>
-<span id="cb151-8"><a href="#cb151-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(MatchId, F1_lob2, F2_lob2) <span class="sc">%&gt;%</span> </span>
-<span id="cb151-9"><a href="#cb151-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rename</span>(</span>
-<span id="cb151-10"><a href="#cb151-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">F1_sub =</span> F1_lob2,</span>
-<span id="cb151-11"><a href="#cb151-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">F2_sub =</span> F2_lob2</span>
-<span id="cb151-12"><a href="#cb151-12" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb151-13"><a href="#cb151-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb151-14"><a href="#cb151-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb151-15"><a href="#cb151-15" aria-hidden="true" tabindex="-1"></a>    logmean_vowels <span class="sc">%&gt;%</span> </span>
-<span id="cb151-16"><a href="#cb151-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(MatchId, F1_logmean, F2_logmean) <span class="sc">%&gt;%</span> </span>
-<span id="cb151-17"><a href="#cb151-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rename</span>(</span>
-<span id="cb151-18"><a href="#cb151-18" aria-hidden="true" tabindex="-1"></a>        <span class="at">F1_logmean1 =</span> F1_logmean,</span>
-<span id="cb151-19"><a href="#cb151-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">F2_logmean1 =</span> F2_logmean</span>
-<span id="cb151-20"><a href="#cb151-20" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb151-21"><a href="#cb151-21" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb151-22"><a href="#cb151-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
-<span id="cb151-23"><a href="#cb151-23" aria-hidden="true" tabindex="-1"></a>    dual_logmean_vowels <span class="sc">%&gt;%</span> </span>
-<span id="cb151-24"><a href="#cb151-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(MatchId, F1_logmean, F2_logmean) <span class="sc">%&gt;%</span> </span>
-<span id="cb151-25"><a href="#cb151-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rename</span>(</span>
-<span id="cb151-26"><a href="#cb151-26" aria-hidden="true" tabindex="-1"></a>        <span class="at">F1_logmean2 =</span> F1_logmean,</span>
-<span id="cb151-27"><a href="#cb151-27" aria-hidden="true" tabindex="-1"></a>        <span class="at">F2_logmean2 =</span> F2_logmean</span>
-<span id="cb151-28"><a href="#cb151-28" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb151-29"><a href="#cb151-29" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb174"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb174-1"><a href="#cb174-1" aria-hidden="true" tabindex="-1"></a>processed_vowels <span class="ot">&lt;-</span> vowels <span class="sc">%&gt;%</span> </span>
+<span id="cb174-2"><a href="#cb174-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb174-3"><a href="#cb174-3" aria-hidden="true" tabindex="-1"></a>    lob2_imputed <span class="sc">%&gt;%</span> </span>
+<span id="cb174-4"><a href="#cb174-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(MatchId, F1_lob2, F2_lob2)</span>
+<span id="cb174-5"><a href="#cb174-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb174-6"><a href="#cb174-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb174-7"><a href="#cb174-7" aria-hidden="true" tabindex="-1"></a>    lob2_sub_vowels <span class="sc">%&gt;%</span> </span>
+<span id="cb174-8"><a href="#cb174-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(MatchId, F1_lob2, F2_lob2) <span class="sc">%&gt;%</span> </span>
+<span id="cb174-9"><a href="#cb174-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rename</span>(</span>
+<span id="cb174-10"><a href="#cb174-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">F1_sub =</span> F1_lob2,</span>
+<span id="cb174-11"><a href="#cb174-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">F2_sub =</span> F2_lob2</span>
+<span id="cb174-12"><a href="#cb174-12" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb174-13"><a href="#cb174-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb174-14"><a href="#cb174-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb174-15"><a href="#cb174-15" aria-hidden="true" tabindex="-1"></a>    logmean_vowels <span class="sc">%&gt;%</span> </span>
+<span id="cb174-16"><a href="#cb174-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(MatchId, F1_logmean, F2_logmean) <span class="sc">%&gt;%</span> </span>
+<span id="cb174-17"><a href="#cb174-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rename</span>(</span>
+<span id="cb174-18"><a href="#cb174-18" aria-hidden="true" tabindex="-1"></a>        <span class="at">F1_logmean1 =</span> F1_logmean,</span>
+<span id="cb174-19"><a href="#cb174-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">F2_logmean1 =</span> F2_logmean</span>
+<span id="cb174-20"><a href="#cb174-20" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb174-21"><a href="#cb174-21" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb174-22"><a href="#cb174-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb174-23"><a href="#cb174-23" aria-hidden="true" tabindex="-1"></a>    dual_logmean_vowels <span class="sc">%&gt;%</span> </span>
+<span id="cb174-24"><a href="#cb174-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(MatchId, F1_logmean, F2_logmean) <span class="sc">%&gt;%</span> </span>
+<span id="cb174-25"><a href="#cb174-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rename</span>(</span>
+<span id="cb174-26"><a href="#cb174-26" aria-hidden="true" tabindex="-1"></a>        <span class="at">F1_logmean2 =</span> F1_logmean,</span>
+<span id="cb174-27"><a href="#cb174-27" aria-hidden="true" tabindex="-1"></a>        <span class="at">F2_logmean2 =</span> F2_logmean</span>
+<span id="cb174-28"><a href="#cb174-28" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb174-29"><a href="#cb174-29" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>One last check. Now that we have all the data together, we can see how closely correlated the results of the normalisation methods are.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb152"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb152-1"><a href="#cb152-1" aria-hidden="true" tabindex="-1"></a>norm_values <span class="ot">&lt;-</span> processed_vowels <span class="sc">%&gt;%</span> </span>
-<span id="cb152-2"><a href="#cb152-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>F1, <span class="sc">-</span>F2) <span class="sc">%&gt;%</span> </span>
-<span id="cb152-3"><a href="#cb152-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb152-4"><a href="#cb152-4" aria-hidden="true" tabindex="-1"></a>    MatchId, <span class="fu">matches</span>(<span class="st">'F[1-2]'</span>), <span class="sc">-</span><span class="fu">matches</span>(<span class="st">'band'</span>), <span class="sc">-</span><span class="fu">matches</span>(<span class="st">'50'</span>), </span>
-<span id="cb152-5"><a href="#cb152-5" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">matches</span>(<span class="st">'outlier'</span>)</span>
-<span id="cb152-6"><a href="#cb152-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb152-7"><a href="#cb152-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
-<span id="cb152-8"><a href="#cb152-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="sc">-</span><span class="fu">matches</span>(<span class="st">'MatchId'</span>),</span>
-<span id="cb152-9"><a href="#cb152-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">"variable"</span>,</span>
-<span id="cb152-10"><a href="#cb152-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"norm_value"</span></span>
-<span id="cb152-11"><a href="#cb152-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb152-12"><a href="#cb152-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb152-13"><a href="#cb152-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">formant =</span> <span class="fu">str_sub</span>(variable, <span class="dv">1</span>, <span class="dv">2</span>),</span>
-<span id="cb152-14"><a href="#cb152-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">norm =</span> <span class="fu">str_sub</span>(variable, <span class="dv">4</span>)</span>
-<span id="cb152-15"><a href="#cb152-15" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb152-16"><a href="#cb152-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>variable) <span class="sc">%&gt;%</span> </span>
-<span id="cb152-17"><a href="#cb152-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
-<span id="cb152-18"><a href="#cb152-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_from =</span> norm,</span>
-<span id="cb152-19"><a href="#cb152-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_from =</span> norm_value</span>
-<span id="cb152-20"><a href="#cb152-20" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb175"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb175-1"><a href="#cb175-1" aria-hidden="true" tabindex="-1"></a>norm_values <span class="ot">&lt;-</span> processed_vowels <span class="sc">%&gt;%</span> </span>
+<span id="cb175-2"><a href="#cb175-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>F1, <span class="sc">-</span>F2) <span class="sc">%&gt;%</span> </span>
+<span id="cb175-3"><a href="#cb175-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb175-4"><a href="#cb175-4" aria-hidden="true" tabindex="-1"></a>    MatchId, <span class="fu">matches</span>(<span class="st">'F[1-2]'</span>), <span class="sc">-</span><span class="fu">matches</span>(<span class="st">'band'</span>), <span class="sc">-</span><span class="fu">matches</span>(<span class="st">'50'</span>), </span>
+<span id="cb175-5"><a href="#cb175-5" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">matches</span>(<span class="st">'outlier'</span>)</span>
+<span id="cb175-6"><a href="#cb175-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb175-7"><a href="#cb175-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb175-8"><a href="#cb175-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="sc">-</span><span class="fu">matches</span>(<span class="st">'MatchId'</span>),</span>
+<span id="cb175-9"><a href="#cb175-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">"variable"</span>,</span>
+<span id="cb175-10"><a href="#cb175-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"norm_value"</span></span>
+<span id="cb175-11"><a href="#cb175-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb175-12"><a href="#cb175-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb175-13"><a href="#cb175-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">formant =</span> <span class="fu">str_sub</span>(variable, <span class="dv">1</span>, <span class="dv">2</span>),</span>
+<span id="cb175-14"><a href="#cb175-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">norm =</span> <span class="fu">str_sub</span>(variable, <span class="dv">4</span>)</span>
+<span id="cb175-15"><a href="#cb175-15" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb175-16"><a href="#cb175-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>variable) <span class="sc">%&gt;%</span> </span>
+<span id="cb175-17"><a href="#cb175-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
+<span id="cb175-18"><a href="#cb175-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_from =</span> norm,</span>
+<span id="cb175-19"><a href="#cb175-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_from =</span> norm_value</span>
+<span id="cb175-20"><a href="#cb175-20" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>First, we look at correlations of the normalisation methods which apply to all of the data.</p>
 <div class="cell page-columns page-full">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb153"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb153-1"><a href="#cb153-1" aria-hidden="true" tabindex="-1"></a>norm_values <span class="sc">%&gt;%</span> </span>
-<span id="cb153-2"><a href="#cb153-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb153-3"><a href="#cb153-3" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">contains</span>(<span class="st">'sub'</span>), <span class="sc">-</span>MatchId, <span class="sc">-</span>formant</span>
-<span id="cb153-4"><a href="#cb153-4" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb153-5"><a href="#cb153-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>(<span class="at">use=</span><span class="st">"pairwise.complete.obs"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb153-6"><a href="#cb153-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggcorrplot</span>(<span class="at">method =</span> <span class="st">"square"</span>, <span class="at">lab =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb176"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb176-1"><a href="#cb176-1" aria-hidden="true" tabindex="-1"></a>norm_values <span class="sc">%&gt;%</span> </span>
+<span id="cb176-2"><a href="#cb176-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb176-3"><a href="#cb176-3" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">contains</span>(<span class="st">'sub'</span>), <span class="sc">-</span>MatchId, <span class="sc">-</span>formant</span>
+<span id="cb176-4"><a href="#cb176-4" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb176-5"><a href="#cb176-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>(<span class="at">use=</span><span class="st">"pairwise.complete.obs"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb176-6"><a href="#cb176-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggcorrplot</span>(<span class="at">method =</span> <span class="st">"square"</span>, <span class="at">lab =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display page-columns page-full">
 <div id="fig-norm-all" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-norm-all-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM1_formants_files/figure-html/fig-norm-all-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-344" title="Figure&nbsp;40: Pairwise correlations of normalisation methods applied to the full data set."><img src="SM1_formants_files/figure-html/fig-norm-all-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM1_formants_files/figure-html/fig-norm-all-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-345" title="Figure&nbsp;42: Pairwise correlations of normalisation methods applied to the full data set."><img src="SM1_formants_files/figure-html/fig-norm-all-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-norm-all-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;40: Pairwise correlations of normalisation methods applied to the full data set.
+Figure&nbsp;42: Pairwise correlations of normalisation methods applied to the full data set.
 </figcaption>
 </figure>
 </div>
@@ -5723,50 +5975,29 @@ Figure&nbsp;40: Pairwise correlations of normalisation methods applied to the fu
 </div>
 <p>Now for the top five vowel types:</p>
 <div class="cell page-columns page-full">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb154"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb154-1"><a href="#cb154-1" aria-hidden="true" tabindex="-1"></a>norm_values <span class="sc">%&gt;%</span> </span>
-<span id="cb154-2"><a href="#cb154-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
-<span id="cb154-3"><a href="#cb154-3" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span>MatchId, <span class="sc">-</span>formant</span>
-<span id="cb154-4"><a href="#cb154-4" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb154-5"><a href="#cb154-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>(<span class="at">use=</span><span class="st">'complete.obs'</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb154-6"><a href="#cb154-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggcorrplot</span>(<span class="at">method =</span> <span class="st">"square"</span>, <span class="at">lab=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb177"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb177-1"><a href="#cb177-1" aria-hidden="true" tabindex="-1"></a>norm_values <span class="sc">%&gt;%</span> </span>
+<span id="cb177-2"><a href="#cb177-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb177-3"><a href="#cb177-3" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span>MatchId, <span class="sc">-</span>formant</span>
+<span id="cb177-4"><a href="#cb177-4" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb177-5"><a href="#cb177-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>(<span class="at">use=</span><span class="st">'complete.obs'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb177-6"><a href="#cb177-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggcorrplot</span>(<span class="at">method =</span> <span class="st">"square"</span>, <span class="at">lab=</span><span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display page-columns page-full">
 <div id="fig-norm-5" class="quarto-float quarto-figure quarto-figure-center anchored page-columns page-full">
 <figure class="quarto-float quarto-float-fig figure page-columns page-full">
 <div aria-describedby="fig-norm-5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="SM1_formants_files/figure-html/fig-norm-5-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-345" title="Figure&nbsp;41: Pairwise correlations of normalisation methods applied to the top five vowel types only."><img src="SM1_formants_files/figure-html/fig-norm-5-1.png" class="img-fluid figure-img" width="672"></a>
+<a href="SM1_formants_files/figure-html/fig-norm-5-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-346" title="Figure&nbsp;43: Pairwise correlations of normalisation methods applied to the top five vowel types only."><img src="SM1_formants_files/figure-html/fig-norm-5-1.png" class="img-fluid figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-margin quarto-float-caption quarto-float-fig margin-caption" id="fig-norm-5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;41: Pairwise correlations of normalisation methods applied to the top five vowel types only.
+Figure&nbsp;43: Pairwise correlations of normalisation methods applied to the top five vowel types only.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 <p>It is to be expected that the formant intrinsic methods (Lobanov 2.0 and two parameter log-mean) are closely correlated with one another and not particularly strongly correlated with the (formant extrinsic) single-parameter log-mean method.</p>
-<p>Table 3 of the paper require the post-normalisation count of vowels for Table 3. We output that here.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb155"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb155-1"><a href="#cb155-1" aria-hidden="true" tabindex="-1"></a>processed_vowels <span class="sc">%&gt;%</span> </span>
-<span id="cb155-2"><a href="#cb155-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(F1_lob2), <span class="sc">!</span><span class="fu">is.na</span>(F2_lob2)) <span class="sc">%&gt;%</span> </span>
-<span id="cb155-3"><a href="#cb155-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(vowel)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 10 × 2
-   vowel       n
-   &lt;fct&gt;   &lt;int&gt;
- 1 DRESS     987
- 2 FLEECE   1169
- 3 GOOSE     470
- 4 KIT      1893
- 5 LOT       742
- 6 TRAP      977
- 7 START     602
- 8 STRUT    1002
- 9 THOUGHT   238
-10 NURSE     450</code></pre>
-</div>
-</div>
 <p>Finally, we export the data for modelling.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb157"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb157-1"><a href="#cb157-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(processed_vowels, <span class="fu">here</span>(<span class="st">'data'</span>, <span class="st">'processed_vowels.rds'</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb178"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb178-1"><a href="#cb178-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(processed_vowels, <span class="fu">here</span>(<span class="st">'data'</span>, <span class="st">'processed_vowels.rds'</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="references" class="level1 unnumbered">
@@ -5919,7 +6150,7 @@ Zhu, Hao. 2024. <em><span class="nocase">kableExtra</span>: Construct Complex Ta
 </div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
 
 <ol>
-<li id="fn1"><p>We did not end up using this variable in our analysis but it may be useful for post-hoc analysis or model criticism.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn1"><p>We did not end up using this variable in our analysis but it may be useful for post-hoc analysis or model criticism by others.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section></div></main>
 <!-- /main column -->

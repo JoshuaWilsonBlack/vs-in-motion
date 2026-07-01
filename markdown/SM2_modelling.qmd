@@ -2247,7 +2247,7 @@ QB1_caregivercount <- QB1 |>
     n = n_distinct(speaker)
   )
 # 24627 tokens from notional caregiver generation.
-cat('Tokens from caregiver generation: ', nrow(QB1_caregivercount), '\n')
+cat('Tokens from younger adult comparison group: ', nrow(QB1_caregivercount), '\n')
 
 QB1_oldestgeneration <- QB1 |> 
   filter(
@@ -2268,7 +2268,7 @@ QB1_oldestgeneration <- QB1 |>
 cat('Tokens from oldest generation: ', nrow(QB1_oldestgeneration), '\n')
 
 # 45 speakers in notional caregiver generation.
-cat('Caregivers: ', QB1_caregivercount$n[[1]], '\n')  
+cat('Younger adult comparison: ', QB1_caregivercount$n[[1]], '\n')  
 
 # 18 speakers in oldest generation
 cat('Oldest: ', QB1_oldestgeneration$n[[1]])
@@ -2425,9 +2425,9 @@ First, as a sanity check, we'll look at QB1 change over age categories.
 ```{r}
 #| label: fig-qb-age-test
 #| fig.lab: | 
-#|   Change over time for KIT F1. Higher values are older speakers.
+#|   Change over time for KIT F1. Higher 'age_cat_s' values are older speakers.
 test <- estimate_relation(
-  QB1_models$model[[11]],
+  QB1_models$model[[1]],
   by = c("age_cat_s = seq(-1.79693581, 2.55572475, 0.6218086)", "gender", "duration_s = 0"),
   predict="link",
   ci = 0.9
@@ -2439,6 +2439,37 @@ plot(test) +
   labs(
     title = QB1_models$vowel[[1]],
     subtitle = QB1_models$formant_type[[1]]
+  )
+```
+
+Let's see this for one other vowels discussed in the body text of the article:
+[nurse]{.smallcaps}. For both [kit]{.smallcaps} and [nurse]{.smallcaps}, we
+mention apparent reversals and discuss their timing. For [nurse]{.smallcap} we
+could look at either F1 or F2. Let's look at F1.
+
+```{r}
+#| label: fig-qb-age-nurse-f1
+#| fig.lab: | 
+#|   Change over time for NURSE F1. Higher 'age_cat_s' values are older speakers.
+nurse_rel <- estimate_relation(
+  QB1_models |> 
+    filter(
+      vowel == "NURSE",
+      formant_type == "F1_lob2"
+    ) |> 
+    pull(model) |> 
+    pluck(1),
+  by = c("age_cat_s = seq(-1.79693581, 2.55572475, 0.6218086)", "gender", "duration_s = 0"),
+  predict="link",
+  ci = 0.9
+)
+
+nurse_rel
+
+plot(nurse_rel) +
+  labs(
+    title = "NURSE",
+    subtitle = "F1_lob2"
   )
 ```
 
@@ -2500,18 +2531,20 @@ research.
 Create columns to identify reference predictions.
 
 ```{r}
+# Modify this block to define the 'generations' used to interpret the
+# results.
 QB1_preds <- QB1_preds %>% 
   mutate(
     generation = case_when(
       between(age_cat, 6.9, 8) & gender == "f" ~ "Oldest",
-      between(age_cat, 0.9, 2.1) & gender == "f" ~ "Caregiver",
+      between(age_cat, 0.9, 2.1) & gender == "f" ~ "Younger", # only f caregivers
+      # between(age_cat, 0.9, 2.1) ~ "Younger", # f and m caregivers
       .default = "Other"
     )
   )
 ```
 
 Now we plot just the extended short front vowel shift. 
-
 
 ```{r}
 #| labels: figs-qb1-change-time
@@ -2666,7 +2699,7 @@ comp_plot <- function(model_preds, qb_preds, vowel_name, formant_name) {
   
   caregiver_ref <- qb_preds %>% 
         filter(
-          generation == "Caregiver",
+          generation == "Younger",
           vowel == vowel_name
         ) %>% 
         group_by(generation) %>% 
@@ -2676,7 +2709,7 @@ comp_plot <- function(model_preds, qb_preds, vowel_name, formant_name) {
             mean(Predicted_F1_lob2),
             mean(Predicted_F2_lob2)
           ),
-          label = "Caregiver level"
+          label = "Younger adults (F) level"
         )
   
   out_plot <- model_preds |> 
@@ -2873,7 +2906,7 @@ ref_points <- QB1_preds %>%
   mutate(
     generation = case_when(
       generation == "Oldest" ~ "Oldest adults (F)",
-      generation == "Caregiver" ~ "Caregivers (F)",
+      generation == "Younger" ~ "Younger adults (F)",
       .default = generation
     )
   ) %>% 
@@ -3022,18 +3055,45 @@ kids_plot <- model_widepreds %>%
     inherit.aes = FALSE,
     data = ci_boxes
   ) +
-  geom_label_repel(
-    aes(label = label),
-    size = 2, 
-    max.overlaps = 50,
-    label.padding = 0.1,
+  # geom_label_repel(
+  #   aes(label = label),
+  #   size = 3, 
+  #   max.overlaps = 50,
+  #   label.padding = 0.1,
+  #   fontface = "bold",
+  #   alpha = 0.8,
+  #   force = 7,
+  #   #nudge_x = 0.2,
+  #   #nudge_y = 0.1,
+  #   min.segment.length = 100 # i.e. no segments.
+  #   ) +
+  # Switch to manual label locations
+  geom_label(
+    aes(
+      x = F2,
+      y = F1,
+      label = vowel,
+      colour = vowel
+    ),
+    inherit.aes = FALSE,
     fontface = "bold",
+    size = 3, 
     alpha = 0.8,
-    #nudge_x = 0.2,
-    #nudge_y = 0.1,
-    min.segment.length = 0
-    ) +
-  geom_point(aes(shape = generation), size = 3, data = ref_points) +
+    data = tribble(
+      ~vowel, ~gender, ~F1, ~F2,
+      "FLEECE", "Female", -1.3, 1.70,
+      "KIT", "Female", -0.95, 0.9,
+      "DRESS", "Female", -0.05, 1.2,
+      "NURSE", "Female", -0.65, -0.25,
+      "TRAP", "Female", 0.4, 0.9,
+      "FLEECE", "Male", -1.35, 1.7,
+      "KIT", "Male", -0.95, 0.9,
+      "DRESS", "Male", -0.15, 1.2,
+      "NURSE", "Male", -0.55, -0.5,
+      "TRAP", "Male", 0.7, 0.5
+    )
+  ) +
+  geom_point(aes(shape = generation), size = 4, data = ref_points) +
   scale_x_reverse(expand = expansion(mult = 0.1)) +
   scale_y_reverse() +
   scale_colour_manual(values = vowel_colours_5) +
@@ -3041,7 +3101,7 @@ kids_plot <- model_widepreds %>%
   coord_fixed() +
   scale_shape_manual(
     values = list(
-      "Caregivers (F)" = 18,
+      "Younger adults (F)" = 18,
       "Youngest Children (4;2)" = 20,
       "Oldest adults (F)" = 4
     )
@@ -3148,7 +3208,7 @@ out_plot <- model_widepreds %>%
   scale_colour_manual(values = vowel_colours_5) +
   scale_shape_manual(
     values = list(
-      "Caregivers (F)" = 18,
+      "Younger adults (F)" = 18,
       "Youngest Children (4;2)" = 20,
       "Oldest adults (F)" = 4,
       "Storyteller (M)" = 7
@@ -3180,6 +3240,181 @@ ggsave(
 
 out_plot
 ```
+
+As another side-path, we considered what would happen if we did not restrict
+the 'community comparison younger adults' to females. The following is the 
+vowel space which results:
+```{r}
+#| label: fig-vs-all-preschoolers-male
+#| fig-cap: |
+#|   Model predictions from age 4;2 to 5 with reference points from QuakeBox 
+#|   corpus and 'age matched comparison' including male speakers.  
+#|   70% and 90% credible intervals are plotted.
+ref_points_2 <- QB1_preds %>% 
+  mutate(
+    generation = case_when(
+      between(age_cat, 6.9, 8) & gender == "f" ~ "Oldest",
+      between(age_cat, 0.9, 2.1) ~ "Younger",
+      .default = "Other"
+    )
+  ) %>%
+  group_by(vowel, generation) %>% 
+  summarise(
+    Predicted_F1 = mean(Predicted_F1_lob2),
+    Predicted_F2 = mean(Predicted_F2_lob2)
+  ) %>% 
+  mutate(
+    generation = case_when(
+      generation == "Oldest" ~ "Oldest adults (F)",
+      generation == "Younger" ~ "Younger (F)",
+      .default = generation
+    )
+  ) %>% 
+  crossing(
+    gender = c("M", "F")
+  ) %>% 
+  bind_rows(
+    model_widepreds %>% 
+      group_by(vowel, gender) %>% 
+      filter(age == min(age)) %>% 
+      select(vowel, gender, Predicted_F1, Predicted_F2) %>% 
+      mutate(
+        generation = "Youngest Children (4;2)"
+      )
+  ) %>% 
+  filter(
+    generation != "Other",
+    vowel %in% short_front
+  ) %>% 
+  mutate(
+    vowel = factor(vowel, levels = short_front),
+    gender = if_else(gender == "F", "Female", "Male"),
+    gender = factor(gender, levels = c("Female", "Male"))
+  )
+
+kids_plot_2 <- model_widepreds %>% 
+  group_by(vowel, gender) %>% 
+  mutate(
+    label = if_else(age == min(age), vowel, "")
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    vowel = factor(vowel, levels = short_front),
+    gender = if_else(gender == "F", "Female", "Male"),
+    gender = factor(gender, levels = c("Female", "Male"))
+  ) %>% 
+  ggplot(
+    aes(
+      x = Predicted_F2,
+      y = Predicted_F1,
+      colour = vowel
+    )
+  ) +
+  geom_path(
+    show.legend = FALSE,
+    arrow = arrow(
+        ends = "last", 
+        type="closed",
+        length = unit(2, "mm")
+      ),
+    linetype = 1,
+    linewidth = 0.7
+  ) +
+  geom_textpath(
+    aes(
+      x = F2,
+      y = F1,
+      colour = vowel,
+      label = label,
+      group = vowel_group
+    ),
+    linetype = "dashed",
+    vjust = 1,
+    size = 1.5,
+    inherit.aes = FALSE,
+    data = ci_boxes
+  ) +
+  geom_polygon(
+    aes(
+      x = F2,
+      y = F1,
+      fill = vowel,
+      group = vowel_group
+    ),
+    linewidth = 0,
+    alpha = 0.2,
+    inherit.aes = FALSE,
+    data = ci_boxes
+  ) +
+  # geom_label_repel(
+  #   aes(label = label),
+  #   size = 3, 
+  #   max.overlaps = 50,
+  #   label.padding = 0.1,
+  #   fontface = "bold",
+  #   alpha = 0.8,
+  #   force = 7,
+  #   #nudge_x = 0.2,
+  #   #nudge_y = 0.1,
+  #   min.segment.length = 100 # i.e. no segments.
+  #   ) +
+  # Switch to manual label locations
+  geom_label(
+    aes(
+      x = F2,
+      y = F1,
+      label = vowel,
+      colour = vowel
+    ),
+    inherit.aes = FALSE,
+    fontface = "bold",
+    size = 3, 
+    alpha = 0.8,
+    data = tribble(
+      ~vowel, ~gender, ~F1, ~F2,
+      "FLEECE", "Female", -1.3, 1.70,
+      "KIT", "Female", -0.95, 0.9,
+      "DRESS", "Female", -0.05, 1.2,
+      "NURSE", "Female", -0.65, -0.25,
+      "TRAP", "Female", 0.4, 0.9,
+      "FLEECE", "Male", -1.35, 1.7,
+      "KIT", "Male", -0.95, 0.9,
+      "DRESS", "Male", -0.15, 1.2,
+      "NURSE", "Male", -0.55, -0.5,
+      "TRAP", "Male", 0.7, 0.5
+    )
+  ) +
+  geom_point(aes(shape = generation), size = 4, data = ref_points_2) +
+  scale_x_reverse(expand = expansion(mult = 0.1)) +
+  scale_y_reverse() +
+  scale_colour_manual(values = vowel_colours_5) +
+  scale_fill_manual(values = vowel_colours_5) +
+  coord_fixed() +
+  scale_shape_manual(
+    values = list(
+      "Younger adults (M and F)" = 18,
+      "Youngest Children (4;2)" = 20,
+      "Oldest adults (F)" = 4
+    )
+  ) + 
+  labs(
+    y = "F1 (normalised)",
+    x = "F2 (normalised)",
+    colour = "Vowel",
+    shape = "Population"
+  ) +
+  guides(
+    color = "none",
+    fill = "none"
+  ) +
+  facet_grid(cols = vars(gender)) +
+  theme(
+    legend.position = "bottom"
+  )
+
+kids_plot_2
+```
+
 
 # Additional tests
 

@@ -1,4 +1,4 @@
-# This script is taken from Hurring et al. (Under review).
+# This script is taken from Hurring et al. (2025).
 
 # This script searches for all vowel tokens in the QB1 corpus, collects relevant
 # attributes, and interfaces with Praat (through LaBB-CAT) in order to extract

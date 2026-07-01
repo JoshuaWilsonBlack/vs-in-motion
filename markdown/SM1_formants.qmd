@@ -1967,7 +1967,7 @@ too short for FastTrack to function. Examples of this were shown above in
 ```{r}
 vowels <- vowels %>% 
   filter(
-    !is.na(F1_50)
+    !is.na(F1_50) # NA cases should be the same for both formants.
   )
 
 na_count <- nrow(vowels)
@@ -2581,7 +2581,7 @@ As expected, there's a substantial overlap between the F0 and F1 distribution.
 
 We create a variable to track the top 10% of tokens by F0.^[We did not end up 
 using this variable in our analysis but it may be useful for post-hoc analysis 
-or model criticism.]
+or model criticism by others.]
 ```{r}
 vowels <- vowels %>% 
   mutate(
@@ -2589,7 +2589,8 @@ vowels <- vowels %>%
   )
 ```
 
-Finally, we filter out very extreme F1 values.
+Finally, we filter out very extreme F1 values. In cases with extreme F1 values,
+F2 will almost certainly be unreliable.
 
 ```{r}
 vowels <- vowels %>% 
@@ -2598,8 +2599,17 @@ vowels <- vowels %>%
 extreme_count <- nrow(vowels)
 # 9289
 
-f1_extreme_count <- f1_sd_count - (na_count - extreme_count)
-f2_extreme_count <- f2_sd_count - (na_count - extreme_count)
+f1_extreme_count <- vowels |> 
+  filter(
+    !high_f1_bandwidth, !F1_outlier
+  ) |> 
+  nrow()
+
+f2_extreme_count <- vowels |> 
+  filter(
+    !high_f2_bandwidth, !F2_outlier
+  ) |> 
+  nrow()
 ```
 
 We're left with `r nrow(vowels)` tokens.
@@ -3866,9 +3876,22 @@ lob2_imputed <- vowels %>%
     !(pc %in% to_remove$pc)
   ) %>% 
   select(-pc)
+
+f1_lob2_count <- nrow(
+  lob2_imputed %>% 
+    filter(!high_f1_bandwidth, !F1_outlier, !is.na(F1_lob2))
+)
+
+f2_lob2_count <- nrow(
+  lob2_imputed %>% 
+    filter(!high_f2_bandwidth, !F2_outlier)
+)
+
 ```
 
 We remove `r nrow(to_remove)` recordings.
+
+## Post-normalisation Data Summary
 
 Let's have a look at the resulting data set.
 ```{r}
@@ -3887,6 +3910,144 @@ lob2_imputed %>%
     point_alpha = 0.05
   )
 ```
+
+We also regenerate the filtering flow chart to include the post-normalisation
+filtering of participant collection points.
+
+```{r}
+#| label: fig-filtering-flow-2
+#| fig.cap: "Data filtering flow chart, after normalisation."
+#| fig.height: 10
+# Flow chart generated using the DiagrammeR package.
+flow_chart <- mermaid(
+  diagram = glue("
+  graph TB
+  
+  A(Extract data from LaBB-CAT: {initial_count} tokens) --> 
+  B(Home language: {language_count} tokens)
+  B --> C(FOOT, SCHWA and HANA: {word_count} tokens)
+  C --> D(Hesitations, and missing words: {na_word_count} tokens)
+  D --> E(Preceeding liquids: {liquid_count} tokens)
+  E --> F(FastTrack errors: {na_count} tokens)
+  F --> Q(Noisy tokens: {noise_count} tokens)
+  Q --> M(Long tokens: {length_count} tokens)
+  M --> G(F1: high bandwidth: {f1_band_count} tokens)
+  M --> H(F2: high bandwidth: {f2_band_count} tokens)
+  G --> I(F1: SD filter: {f1_sd_count} tokens)
+  H --> J(F2: SD filter: {f2_sd_count} tokens)
+  I --> K(F1: extremes: {f1_extreme_count} tokens)
+  J --> L(F2: extremes: {f2_extreme_count} tokens)
+  K --> O(F1: low-token speakers: {f1_lob2_count} tokens)
+  L --> P(F2: low-token speakers: {f2_lob2_count} tokens)
+  "),
+  width = 800
+)
+
+flow_chart
+```
+
+And now we generate the counts for the summary tables in the paper.
+
+Participant summary:
+```{r}
+participants_collect <- lob2_imputed %>%
+  group_by(participant) %>% 
+  summarise(
+    collection_points = n_distinct(collect)
+  ) %>% 
+  group_by(collection_points) %>% 
+  summarise(n_participants = n())
+
+participants_collect %>% 
+  knitr::kable()
+```
+
+```{r}
+participants_data <- lob2_imputed %>% 
+  group_by(participant) %>%
+  summarise(
+    gender = first(gender),
+    ethnicity = first(ethnicity),
+    home_language = first(home_language),
+    dob = first(dob),
+    age = first(age)
+  )
+
+participants_data |> 
+  count(gender)
+```
+
+```{r}
+participants_data |> 
+  count(ethnicity)
+```
+
+```{r}
+# F1 counts.
+f1_counts <- lob2_imputed |> 
+  filter(!high_f1_bandwidth, !F1_outlier, !is.na(F1_lob2)) |> 
+  count(vowel) |> 
+  arrange(vowel)
+
+f1_counts
+```
+
+Total number of F2 tokens is `r sum(f1_counts$n)`.
+
+```{r}
+# F2 counts.
+f2_counts <- lob2_imputed |> 
+  filter(!high_f2_bandwidth, !F2_outlier, !is.na(F2_lob2)) |> 
+  count(vowel) |> 
+  arrange(vowel)
+
+f2_counts
+```
+
+Total number of F2 tokens is `r sum(f2_counts$n)`.
+
+Let's look at the age variables:
+```{r}
+min_age <- min(participants_data$age)
+min_years <- min_age %/% 12
+min_months <- min_age %% 12
+glue("min age: {min_years};{min_months}")
+
+med_age <- median(participants_data$age)
+med_years <- med_age %/% 12
+med_months <- med_age %% 12
+glue("median age: {med_years};{med_months}")
+
+max_age <- max(participants_data$age)
+max_years <- max_age %/% 12
+max_months <- max_age %% 12
+glue("max age: {max_years};{max_months}")
+```
+
+```{r}
+min_dob <- min(participants_data$dob)
+min_dob
+
+med_dob <- median(participants_data$dob)
+med_dob
+
+max_dob <- max(participants_data$dob)
+max_dob
+```
+
+```{r}
+#| label: fig-age-dens-postnorm
+#| fig.cap: "Distribution age ages after normalisation."
+
+participants_data |> 
+  ggplot(
+    # aes(
+      x = age
+    )
+  ) +
+  geom_density(fill = "grey", alpha = 0.5)
+```
+
 
 # Merge and Export Data
 
@@ -3986,16 +4147,6 @@ It is to be expected that the formant intrinsic methods (Lobanov 2.0 and
 two parameter log-mean) are closely correlated with one another and not 
 particularly strongly correlated with the (formant extrinsic) single-parameter
 log-mean method.
-
-Table 3 of the paper require the post-normalisation count of vowels for Table 3.
-We output that here.
-
-```{r}
-processed_vowels %>% 
-  filter(!is.na(F1_lob2), !is.na(F2_lob2)) %>% 
-  count(vowel)
-```
-
 
 Finally, we export the data for modelling.
 
